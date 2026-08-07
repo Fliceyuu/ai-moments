@@ -416,6 +416,8 @@ function defaultFriends() {
 /** 默认设置 */
 function defaultSettings() {
   return {
+    provider: 'openrouter',      // API 服务商: openrouter/openai/deepseek/groq/custom
+    customBaseUrl: '',           // 自定义服务商 base URL(provider='custom' 时)
     apiKey: '',
     referer: 'https://local.moments.ai',
     title: 'AI朋友圈',
@@ -608,10 +610,43 @@ function areaField(label, value, placeholder, hint) {
 }
 
 /* >>> ai.js */
-/* ============ ai.js - OpenRouter 调用 + AI 行为引擎 ============ */
+/* ============ ai.js - 多服务商 LLM 调用 + AI 行为引擎 ============ */
 'use strict';
 
-const OR_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+/** 常用模型服务商(OpenAI 兼容)的 Base URL 预设 */
+const PROVIDERS = {
+  openrouter: { name: 'OpenRouter',       base: 'https://openrouter.ai/api/v1',                  openrouterHeaders: true,  models: ['deepseek/deepseek-chat:free', 'openai/gpt-5-mini:free', 'anthropic/claude-sonnet-4'] },
+  openai:     { name: 'OpenAI',           base: 'https://api.openai.com/v1',                     openrouterHeaders: false, models: ['gpt-4o-mini', 'gpt-4o', 'gpt-5'] },
+  deepseek:   { name: 'DeepSeek',         base: 'https://api.deepseek.com/v1',                   openrouterHeaders: false, models: ['deepseek-chat', 'deepseek-reasoner'] },
+  groq:       { name: 'Groq',             base: 'https://api.groq.com/openai/v1',                openrouterHeaders: false, models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'] },
+  moonshot:   { name: 'Moonshot(Kimi)',   base: 'https://api.moonshot.cn/v1',                    openrouterHeaders: false, models: ['moonshot-v1-8k'] },
+  zhipu:      { name: '智谱 GLM',          base: 'https://open.bigmodel.cn/api/paas/v4',          openrouterHeaders: false, models: ['glm-4-flash', 'glm-4'] },
+  qwen:       { name: '通义千问',          base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', openrouterHeaders: false, models: ['qwen-turbo', 'qwen-plus'] },
+  custom:     { name: '自定义',            base: '',                                              openrouterHeaders: false, models: [''] },
+};
+
+/** 当前生效的 API 端点(chat/completions) */
+function currentEndpoint() {
+  const p = PROVIDERS[Store.settings.provider] || PROVIDERS.openrouter;
+  let base = p.base;
+  if (Store.settings.provider === 'custom') {
+    base = (Store.settings.customBaseUrl || '').trim().replace(/\/+$/, '');
+  }
+  if (!base) return '';
+  return base + '/chat/completions';
+}
+
+/** 当前服务商是否需要 OpenRouter 专属请求头 */
+function usesOpenRouterHeaders() {
+  const p = PROVIDERS[Store.settings.provider] || PROVIDERS.openrouter;
+  return !!p.openrouterHeaders;
+}
+
+/** 当前服务商默认模型 */
+function currentDefaultModel() {
+  const p = PROVIDERS[Store.settings.provider] || PROVIDERS.openrouter;
+  return p.models[0] || '';
+}
 
 /** 拿到 Key */
 function apiKey() { return (Store.settings.apiKey || '').trim(); }
@@ -634,32 +669,38 @@ function buildSystemPrompt(f) {
 }
 
 /**
- * 带重试地请求 OpenRouter JSON 输出
+ * 带重试地请求 LLM 输出 JSON(支持多服务商)
  * @param {Array} messages 消息
  * @param {string} model 模型 id
  * @returns {Promise<object>} 解析后的 JSON
  */
 async function chatJSON(messages, model) {
+  const endpoint = currentEndpoint();
+  if (!endpoint) throw new Error('未配置 API 服务商地址');
   const body = {
-    model: model || 'deepseek/deepseek-chat:free',
+    model: model || currentDefaultModel() || 'deepseek/deepseek-chat:free',
     messages,
     response_format: { type: 'json_object' },
     temperature: 1.0,
+    max_tokens: 1200,
   };
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + apiKey(),
+  };
+  if (usesOpenRouterHeaders()) {
+    headers['HTTP-Referer'] = Store.settings.referer;
+    headers['X-OpenRouter-Title'] = Store.settings.title;
+  }
   try {
-    const res = await fetch(OR_ENDPOINT, {
+    const res = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey(),
-        'HTTP-Referer': Store.settings.referer,
-        'X-OpenRouter-Title': Store.settings.title,
-      },
+      headers,
       body: JSON.stringify(body),
     });
     if (!res.ok) {
       let err = res.status;
-      try { const j = await res.json(); err = j.error && j.error.message || err; } catch (e) {}
+      try { const j = await res.json(); err = j.error && (j.error.message || j.error) || err; } catch (e) {}
       throw new Error('API错误 ' + err);
     }
     const data = await res.json();
@@ -733,23 +774,30 @@ function logError(label, e) {
   console.error('[' + label + ']', e);
 }
 
-/** 用免费模型测试 Key 有效性 */
+/** 用当前服务商测试 Key 有效性 */
 async function testKey(key) {
-  const res = await fetch(OR_ENDPOINT, {
+  const endpoint = currentEndpoint();
+  if (!endpoint) throw new Error('未配置 API 服务商地址');
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + key,
+  };
+  if (usesOpenRouterHeaders()) {
+    headers['HTTP-Referer'] = Store.settings.referer;
+    headers['X-OpenRouter-Title'] = Store.settings.title;
+  }
+  const res = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + key,
-    },
+    headers,
     body: JSON.stringify({
-      model: 'deepseek/deepseek-chat:free',
+      model: currentDefaultModel() || 'deepseek/deepseek-chat:free',
       messages: [{ role: 'user', content: 'hi' }],
       max_tokens: 2,
     }),
   });
   if (!res.ok) {
     let err = 'HTTP ' + res.status;
-    try { const j = await res.json(); err = (j.error && j.error.message) || err; } catch (e) {}
+    try { const j = await res.json(); err = (j.error && (j.error.message || j.error)) || err; } catch (e) {}
     throw new Error(err);
   }
   return true;
@@ -1269,7 +1317,7 @@ function renderSettings() {
           <button onclick="openKeyModal()">${s.apiKey ? '修改' : '设置'}</button>
         </div>
         <div class="set-row" style="justify-content:flex-start;">
-          <span style="font-size:13px;color:#999;">在 openrouter.ai 注册获取 Key，支持微信/支付宝充值，免费模型可用</span>
+          <span style="font-size:13px;color:#999;">服务商：${(PROVIDERS[s.provider]||PROVIDERS.openrouter).name}。一个 Key 通用其所有模型；可在设置里切换服务商或填自定义地址。</span>
         </div>
       </div>
 
@@ -1343,11 +1391,32 @@ function bindSettingsEvents() {
 
 /** Key 配置弹窗 */
 function openKeyModal() {
-  openModal('OpenRouter API Key', (body) => {
-    const key = textField('API Key', Store.settings.apiKey, 'sk-or-...', '在 openrouter.ai → Keys 创建，支持信用卡/支付宝');
-    const ref = textField('HTTP-Referer（选填）', Store.settings.referer, 'https://local.moments.ai');
-    const ttl = textField('X-OpenRouter-Title（选填）', Store.settings.title, 'AI朋友圈');
-    body.append(key.wrap, ref.wrap, ttl.wrap);
+  openModal('API 密钥 / 服务商', (body) => {
+    // 服务商下拉
+    const prowrap = document.createElement('div'); prowrap.className = 'field';
+    prowrap.innerHTML = `<label for="providerSel">API 服务商</label>`;
+    const ps = document.createElement('select'); ps.id = 'providerSel';
+    ps.style.width = '100%'; ps.style.padding = '10px 12px'; ps.style.border = '1px solid #ddd'; ps.style.borderRadius = '8px'; ps.style.fontSize = '15px';
+    const cur = Store.settings.provider || 'openrouter';
+    Object.keys(PROVIDERS).forEach(k => {
+      const o = document.createElement('option');
+      o.value = k; o.textContent = PROVIDERS[k].name + '  —  ' + PROVIDERS[k].base || '自定义';
+      if (k === cur) o.selected = true;
+      ps.appendChild(o);
+    });
+    prowrap.appendChild(ps);
+    prowrap.querySelector('label').textContent = 'API 服务商（决定请求发到哪家，密钥用该家自己的 Key）';
+
+    // 自定义地址(仅 provider==custom 时显示)
+    const cust = textField('自定义 API Base URL', Store.settings.customBaseUrl, 'https://api.example.com/v1', '仅"自定义"服务商需要填,形如 https://域名/v1');
+    cust.wrap.style.display = cur === 'custom' ? '' : 'none';
+
+    const key = textField('API Key', Store.settings.apiKey, 'sk-...', '填所选服务商的 Key：OpenRouter 在 openrouter.ai/keys，OpenAI / DeepSeek 等在其官网取');
+    const hint = document.createElement('div');
+    hint.className = 'field';
+    hint.style.fontSize = '11px'; hint.style.color = '#999'; hint.style.lineHeight = '1.5';
+    hint.textContent = '提示：一个 Key 通用于该服务商的所有模型；好友各自的"模型"字段请填该服务商支持的模型 id（如 OpenAI 填 gpt-4o-mini、DeepSeek 填 deepseek-chat）。';
+    body.append(prowrap, cust.wrap, key.wrap, hint);
 
     const test = document.createElement('button');
     test.className = 'btn ghost'; test.textContent = '测试连接';
@@ -1356,9 +1425,23 @@ function openKeyModal() {
     save.className = 'btn'; save.textContent = '保存'; save.style.marginTop = '8px';
     body.appendChild(save);
 
+    ps.onchange = () => {
+      Store.settings.provider = ps.value;
+      cust.wrap.style.display = ps.value === 'custom' ? '' : 'none';
+      // 自动给未保存的 key 占位提示切换
+      const inp = key.body.querySelector('input');
+      inp.placeholder = PROVIDERS[ps.value].name + ' 的 Key';
+      renderSettings();
+    };
+
     test.onclick = async () => {
       const k = key.body.querySelector('input').value.trim();
       if (!k) return toast('先填 Key');
+      // 临时把待填的 provider/custom 应用,便于测试
+      const prevP = Store.settings.provider;
+      Store.settings.provider = ps.value;
+      const prevC = Store.settings.customBaseUrl;
+      Store.settings.customBaseUrl = cust.body.querySelector('input').value.trim();
       test.textContent = '测试中…';
       try {
         await testKey(k);
@@ -1366,12 +1449,16 @@ function openKeyModal() {
       } catch (e) {
         toast('❌ ' + e.message);
       }
+      Store.settings.provider = prevP;
+      Store.settings.customBaseUrl = prevC;
       test.textContent = '测试连接';
     };
     save.onclick = () => {
+      Store.settings.provider = ps.value;
+      Store.settings.customBaseUrl = cust.body.querySelector('input').value.trim();
       Store.settings.apiKey = key.body.querySelector('input').value.trim();
-      Store.settings.referer = ref.body.querySelector('input').value.trim() || 'https://local.moments.ai';
-      Store.settings.title = ttl.body.querySelector('input').value.trim() || 'AI朋友圈';
+      Store.settings.referer = Store.settings.referer || 'https://local.moments.ai';
+      Store.settings.title = Store.settings.title || 'AI朋友圈';
       saveStore(); closeModal(); renderSettings();
       toast('已保存');
     };
@@ -1384,7 +1471,7 @@ function addFriend() {
     id: 'f' + Date.now().toString(36),
     name: '新好友',
     avatar: null, avatarIdx: Math.floor(Math.random() * PALETTE.length),
-    model: 'deepseek/deepseek-chat:free',
+    model: currentDefaultModel() || 'deepseek/deepseek-chat:free',
     identity: '', tone: '', relation: '', chatlog: '',
     autoPost: true, autoLike: true, autoComment: true,
     active: true, lastActivity: 0,
@@ -1400,7 +1487,7 @@ function editFriend(fid) {
   if (!f) return;
   openModal('编辑好友「' + f.name + '」', (body) => {
     const name = textField('昵称', f.name, '好友昵称');
-    const model = textField('OpenRouter 模型', f.model, '如 deepseek/deepseek-chat:free', '可用免费模型，或到 openrouter.ai/models 查');
+    const model = textField('模型', f.model, '模型 id，如 gpt-4o-mini / deepseek-chat', '填所选服务商支持的模型 id。若为 OpenRouter 可带冒号变体如 deepseek/deepseek-chat:free');
     const identity = areaField('身份 / 人设（必填，一句话即可）', f.identity, '例：我的大学室友，程序员，嘴贫爱开玩笑', '只写这一句也行，AI 就靠它做朋友圈人设');
     const tone = areaField('性格 / 语气（选填）', f.tone, '例：口头禅"啧"，爱吐槽', '可以自由写，不用分条');
     const relation = areaField('与你的关系（选填）', f.relation, '例：认识6年，无话不谈', '写清 AI 和你的关系，朋友圈会更贴');
