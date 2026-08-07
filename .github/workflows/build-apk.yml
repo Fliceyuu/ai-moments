@@ -12,6 +12,8 @@ jobs:
   build:
     name: Build AI朋友圈 APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
