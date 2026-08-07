@@ -30,6 +30,17 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      - name: Validate JS syntax
+        run: |
+          node - <<'NODEEOF'
+          const fs=require('fs');
+          const html=fs.readFileSync('app/src/main/assets/index.html','utf8');
+          const m=html.match(/<script>([\s\S]*?)<\/script>/);
+          if(!m){console.error('no <script>');process.exit(1);}
+          fs.writeFileSync('check.js', m[1]);
+          NODEEOF
+          node --check check.js && echo "JS syntax OK"
+
       - name: Build Debug APK
         run: gradle assembleDebug --no-daemon
 
