@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, master ]
     tags: [ 'v*' ]
-  workflow_dispatch:      # 允许在 GitHub 网页手动触发
+  workflow_dispatch:
   pull_request:
     branches: [ main, master ]
 
@@ -28,25 +28,21 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Grant build cache
-        run: mkdir -p $HOME/.gradle
-
       - name: Build Debug APK
-        working-directory: android-app
         run: gradle assembleDebug --no-daemon
 
       - name: Upload Debug APK (作为 CI 产物)
         uses: actions/upload-artifact@v4
         with:
           name: ai-moments-debug-apk
-          path: android-app/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
 
       - name: Create GitHub Release (仅在打 tag 或手动触发时)
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          files: android-app/app/build/outputs/apk/debug/app-debug.apk
+          files: app/build/outputs/apk/debug/app-debug.apk
           name: AI朋友圈 ${{ github.ref_name }}
           body: |
-            自动构建的 AI 朋友圈 APK(dbg 版,可直接安装)。
+            自动构建的 AI 朋友圈 APK(debug 版,可直接安装)。
             使用方式见本项目 README.md。
