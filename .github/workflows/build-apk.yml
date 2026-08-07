@@ -5,82 +5,13 @@ on:
     branches: [ main, master ]
     tags: [ 'v*' ]
   workflow_dispatch:
-    inputs:
-      gen_keystore:
-        description: '生成新的签名密钥库(KEYS)并保存到仓库变量(仅首次/需换密钥时勾选)'
-        type: boolean
-        default: false
   pull_request:
     branches: [ main, master ]
 
 jobs:
-  # ---- 生成签名密钥库(一次性, 手动触发并勾选 gen_keystore) ----
-  gen-keystore:
-    name: 生成签名密钥库
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && inputs.gen_keystore == true
-    permissions:
-      contents: write
-      actions: write
-    steps:
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Generate keystore
-        id: gen
-        run: |
-          alias="ai-moments"
-          storepass="Moments@Release2026"
-          keypass="$storepass"
-          keytool -genkeypair -v \
-            -keystore ai-moments-keystore.jks \
-            -alias "$alias" -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass "$storepass" -keypass "$keypass" \
-            -dname "CN=AI Moments, OU=Mobile, O=AI Moments, L=City, ST=State, C=CN"
-          echo "KEYSTORE_B64=$(base64 -w0 ai-moments-keystore.jks)" >> $GITHUB_OUTPUT
-
-      - name: Upload keystore as artifact (请永久保存)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ai-moments-keystore
-          path: ai-moments-keystore.jks
-          if-no-files-found: error
-
-      # 把 base64 和口令写入仓库变量,供后续构建签名复用 (GITHUB_TOKEN 有 actions:write 权限)
-      - name: Save keystore to repository variables
-        shell: bash
-        env:
-          KS: ${{ steps.gen.outputs.KEYSTORE_B64 }}
-        run: |
-          REPO="${{ github.repository }}"
-          AUTH="Authorization: Bearer ${{ github.token }}"
-          H='Accept: application/vnd.github+json'
-          # 设置 Variables (若不存在则创建,存在则更新)
-          curl -s -X PUT -H "$AUTH" -H "$H" -H 'Content-Type: application/json' \
-            "https://api.github.com/repos/$REPO/actions/variables/KEYSTORE_B64" \
-            -d "{\"name\":\"KEYSTORE_B64\",\"value\":\"$KS\"}" || echo "vars KEYSTORE_B64 设置失败"
-          curl -s -X PUT -H "$AUTH" -H "$H" -H 'Content-Type: application/json' \
-            "https://api.github.com/repos/$REPO/actions/variables/KEYSTORE_PASSWORD" \
-            -d '{"name":"KEYSTORE_PASSWORD","value":"Moments@Release2026"}' || echo "vars password 设置失败"
-          curl -s -X PUT -H "$AUTH" -H "$H" -H 'Content-Type: application/json' \
-            "https://api.github.com/repos/$REPO/actions/variables/KEYSTORE_KEY_ALIAS" \
-            -d '{"name":"KEYSTORE_KEY_ALIAS","value":"ai-moments"}' || echo "vars alias 设置失败"
-          curl -s -X PUT -H "$AUTH" -H "$H" -H 'Content-Type: application/json' \
-            "https://api.github.com/repos/$REPO/actions/variables/KEYSTORE_KEY_PASSWORD" \
-            -d '{"name":"KEYSTORE_KEY_PASSWORD","value":"Moments@Release2026"}' || echo "vars keypass 设置失败"
-          echo "已保存 keystore 相关 variables"
-
-  # ---- 主构建 ----
   build:
-    name: Build AI朋友圈 APK (release签名)
+    name: Build AI朋友圈 APK
     runs-on: ubuntu-latest
-    needs: gen-keystore
-    if: always()
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout
@@ -97,46 +28,21 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Prepare keystore from Variables/Secrets
-        shell: bash
-        env:
-          KS_VAR: ${{ vars.KEYSTORE_B64 }}
-          KS_SEC: ${{ secrets.KEYSTORE_B64 }}
-        run: |
-          B64="$KS_SEC"
-          if [ -z "$B64" ]; then B64="$KS_VAR"; fi
-          if [ -n "$B64" ]; then
-            echo "$B64" | base64 -d > keystore.jks
-            echo "KEYSTORE_PATH=${PWD}/keystore.jks" >> $GITHUB_ENV
-            echo "::notice::已从仓库变量/Secret 加载 keystore 进行 release 签名"
-          else
-            echo "::warning::未找到 keystore,release 将不带签名"
-          fi
+      - name: Build Debug APK
+        run: gradle assembleDebug --no-daemon
 
-      - name: Load signing passwords
-        shell: bash
-        run: |
-          [ -n "${{ vars.KEYSTORE_PASSWORD }}" ]  && echo "KEYSTORE_PASSWORD=${{ vars.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-          [ -n "${{ vars.KEYSTORE_KEY_ALIAS }}" ]  && echo "KEYSTORE_KEY_ALIAS=${{ vars.KEYSTORE_KEY_ALIAS }}" >> $GITHUB_ENV
-          [ -n "${{ vars.KEYSTORE_KEY_PASSWORD }}" ] && echo "KEYSTORE_KEY_PASSWORD=${{ vars.KEYSTORE_KEY_PASSWORD }}" >> $GITHUB_ENV
-          [ -n "${{ secrets.KEYSTORE_PASSWORD }}" ] && echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-          [ -n "${{ secrets.KEYSTORE_KEY_ALIAS }}" ] && echo "KEYSTORE_KEY_ALIAS=${{ secrets.KEYSTORE_KEY_ALIAS }}" >> $GITHUB_ENV
-          [ -n "${{ secrets.KEYSTORE_KEY_PASSWORD }}" ] && echo "KEYSTORE_KEY_PASSWORD=${{ secrets.KEYSTORE_KEY_PASSWORD }}" >> $GITHUB_ENV
-
-      - name: Build Release APK
-        run: gradle assembleRelease --no-daemon
-
-      - name: Upload Release APK
+      - name: Upload Debug APK (作为 CI 产物)
         uses: actions/upload-artifact@v4
         with:
-          name: ai-moments-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
-          if-no-files-found: error
+          name: ai-moments-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (仅在打 tag 或手动触发时)
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/app-release.apk
+          files: app/build/outputs/apk/debug/app-debug.apk
           name: AI朋友圈 ${{ github.ref_name }}
-          body: 正式签名版 AI 朋友圈 APK(release 签名)。
+          body: |
+            自动构建的 AI 朋友圈 APK(debug 版,可直接安装)。
+            使用方式见本项目 README.md。
