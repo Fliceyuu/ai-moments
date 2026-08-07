@@ -1,9 +1,12 @@
 package com.moments.ai;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -13,6 +16,10 @@ import android.widget.ProgressBar;
 public class MainActivity extends Activity {
     private WebView webView;
     private ProgressBar progressBar;
+
+    // 用于接收 WebView 内 <input type="file"> 选择的文件(BLOB/头像/聊天记录导入)
+    private ValueCallback<Uri[]> filePathCallback;
+    private static final int FILECHOOSER_REQ = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,15 +57,6 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 progressBar.setVisibility(View.GONE);
             }
-            // 拦截外部链接(不跳系统浏览器)
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url != null && (url.startsWith("http:") || url.startsWith("https:"))) {
-                    // 外部图片等也在 WebView 内打开
-                    return false;
-                }
-                return false;
-            }
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
@@ -66,10 +64,57 @@ public class MainActivity extends Activity {
             public void onProgressChanged(WebView view, int newProgress) {
                 progressBar.setProgress(newProgress);
             }
+
+            // 关键: 让网页里的 <input type="file"> 能弹出系统文件选择器
+            @Override
+            public boolean onShowFileChooser(WebView webView,
+                                             ValueCallback<Uri[]> filePathCallback,
+                                             FileChooserParams fileChooserParams) {
+                if (MainActivity.this.filePathCallback != null) {
+                    MainActivity.this.filePathCallback.onReceiveValue(null);
+                }
+                MainActivity.this.filePathCallback = filePathCallback;
+
+                Intent intent = (fileChooserParams != null)
+                        ? fileChooserParams.createIntent()
+                        : new Intent(Intent.ACTION_GET_CONTENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);
+                try {
+                    startActivityForResult(intent, FILECHOOSER_REQ);
+                } catch (Exception e) {
+                    MainActivity.this.filePathCallback = null;
+                    return false;
+                }
+                return true;
+            }
         });
 
         // 加载打包进 assets 的应用
         webView.loadUrl("file:///android_asset/index.html");
+    }
+
+    // 接收文件选择结果并回传给 WebView
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FILECHOOSER_REQ) {
+            if (filePathCallback == null) return;
+            Uri[] results = null;
+            if (resultCode == Activity.RESULT_OK) {
+                if (data != null) {
+                    if (data.getData() != null) {
+                        results = new Uri[]{ data.getData() };
+                    } else if (data.getClipData() != null) {
+                        int n = data.getClipData().getItemCount();
+                        results = new Uri[n];
+                        for (int i = 0; i < n; i++) {
+                            results[i] = data.getClipData().getItemAt(i).getUri();
+                        }
+                    }
+                }
+            }
+            filePathCallback.onReceiveValue(results);
+            filePathCallback = null;
+        }
     }
 
     @Override
