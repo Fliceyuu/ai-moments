@@ -14,10 +14,33 @@ android {
         versionName "1.0"
     }
 
+    // 签名配置：从环境变量读取（由 GitHub Actions 注入），不硬编码在代码里
+    signingConfigs {
+        release {
+            def ksPath = System.getenv('KEYSTORE_PATH')
+            if (ksPath != null && new File(ksPath).exists()) {
+                storeFile file(ksPath)
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEYSTORE_KEY_ALIAS')
+                keyPassword System.getenv('KEYSTORE_KEY_PASSWORD')
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // 纯 WebView 应用,压缩混淆没必要(也为避免兼容问题)
             minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 只有当提供了 keystore 环境变量才签名
+            def ksPath = System.getenv('KEYSTORE_PATH')
+            if (ksPath != null && new File(ksPath).exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            // debug 用默认 debug 签名
         }
     }
 
