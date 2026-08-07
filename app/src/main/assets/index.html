@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI 朋友圈</title>
+<style>
+/* ============ AI 朋友圈 - 样式 ============ */
+:root{
+  --bg:#f2f2f2;
+  --card:#ffffff;
+  --top-bar:#3c3c3c;
+  --accent:#576b95;
+  --text:#333;
+  --sub:#999;
+  --line:#eee;
+  --danger:#fa5151;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);
+}
+.app{display:flex;flex-direction:column;height:100%;}
+
+/* 顶部栏 */
+.top-bar{
+  position:sticky;top:0;z-index:50;
+  height:48px;background:var(--top-bar);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:17px;font-weight:600;flex-shrink:0;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+
+/* 页面区 */
+.page{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* 底栏 */
+.bottom-bar{
+  position:sticky;bottom:0;z-index:50;
+  display:flex;height:52px;background:#f7f7f7;
+  border-top:1px solid #ddd;flex-shrink:0;
+}
+.nav-btn{
+  flex:1;border:none;background:transparent;color:#555;
+  font-size:14px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.nav-btn.active{color:var(--accent);font-weight:700;}
+.nav-btn span{font-size:20px;display:block;margin-bottom:1px;}
+
+/* 浮动发布按钮 */
+.fab{
+  position:fixed;right:16px;bottom:72px;z-index:60;
+  width:52px;height:52px;border-radius:50%;border:none;
+  background:var(--accent);color:#fff;font-size:30px;line-height:1;
+  box-shadow:0 2px 8px rgba(87,107,149,.4);cursor:pointer;
+}
+.fab:active{transform:scale(.94);}
+
+/* 朋友圈动态卡片 */
+.feed{max-width:640px;margin:0 auto;padding:10px 0 20px;}
+.post{
+  background:var(--card);margin:10px 12px;border-radius:12px;
+  padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.06);
+}
+.post-head{display:flex;align-items:center;}
+.avatar{
+  width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;
+  background:#ddd;cursor:pointer;
+}
+.post-name{font-weight:600;color:var(--accent);font-size:15px;}
+.post-meta{font-size:11px;color:var(--sub);}
+.post-body{margin:10px 0 6px;}
+.post-text{font-size:15px;line-height:1.6;word-break:break-word;white-space:pre-wrap;}
+.post-text a{color:var(--accent);text-decoration:none;}
+.post-image{margin-top:8px;max-width:100%;border-radius:8px;cursor:pointer;}
+.post-images{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.post-images img{width:calc((100% - 12px)/3);aspect-ratio:1;object-fit:cover;border-radius:6px;}
+
+/* 操作条 */
+.post-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.post-time{font-size:11px;color:var(--sub);}
+.action-btns{display:flex;gap:20px;}
+.action-btns button{
+  border:none;background:transparent;font-size:14px;color:#888;cursor:pointer;padding:2px;
+}
+.action-btns button:active{opacity:.6;}
+
+/* 点赞 + 评论区 */
+.like-bar{margin-top:8px;background:#f7f7f7;border-radius:8px;padding:8px 10px;font-size:13px;}
+.like-bar .likers{color:#576b95;}
+.like-bar+.comment-bar{margin-top:2px;}
+.comment-bar{background:#f7f7f7;border-radius:8px;padding:6px 10px;font-size:14px;line-height:1.7;}
+.comment{padding:2px 0;word-break:break-word;}
+.comment .cname{color:#576b95;font-weight:600;}
+.comment .reply-to{color:#576b95;font-weight:600;}
+.comment .ctext{color:#333;}
+.comment .creply-target{font-size:12px;color:#888;text-align:right;}
+
+/* 空的提示 */
+.empty-tip{text-align:center;color:var(--sub);padding:60px 20px;font-size:14px;}
+
+/* 个人信息页 */
+.profile{max-width:640px;margin:0 auto;padding-bottom:20px;}
+.profile-banner{
+  width:100%;height:150px;object-fit:cover;display:block;background:#ddd;
+}
+.profile-info{position:relative;padding:14px;display:flex;align-items:flex-end;}
+.profile-avatar{
+  width:74px;height:74px;border-radius:10px;object-fit:cover;border:3px solid #fff;
+  margin-top:-40px;flex-shrink:0;box-shadow:0 0 0 1px #ddd;background:#ddd;cursor:pointer;
+}
+.profile-detail{margin-left:12px;padding-bottom:4px;}
+.profile-name{font-size:19px;font-weight:700;}
+.profile-sig{font-size:13px;color:#666;margin-top:4px;}
+.profile-tag{margin-left:auto;text-align:right;flex-shrink:0;}
+.profile-tag div{font-size:12px;color:#999;margin-left:12px;white-space:nowrap;}
+
+/* 设置页 */
+.settings{max-width:640px;margin:0 auto;padding-bottom:30px;}
+.set-group{background:#fff;margin:10px 12px;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+.set-group-title{font-size:12px;color:#999;padding:14px 16px 6px;}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer;}
+.set-row:last-child{border-bottom:none;}
+.set-row .label{font-size:15px;}
+.set-row .value{font-size:14px;color:#999;max-width:55%;text-align:right;word-break:break-all;}
+.set-row button{font-size:14px;color:var(--accent);border:none;background:none;cursor:pointer;}
+
+/* 按钮 */
+.btn{
+  display:block;width:calc(100% - 24px);margin:10px auto;padding:12px;
+  border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;
+  background:var(--accent);color:#fff;
+}
+.btn:active{opacity:.85;}
+.btn.danger{background:#fff;color:var(--danger);border:1px solid var(--danger);}
+.btn.ghost{background:#fff;color:var(--accent);border:1px solid var(--accent);}
+
+/* 弹窗/遮罩 */
+.overlay{
+  position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.5);
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.modal{
+  background:#fff;width:100%;max-width:640px;border-radius:16px 16px 0 0;
+  max-height:88vh;overflow-y:auto;padding:20px 18px 24px;
+}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.modal-title{font-size:17px;font-weight:700;}
+.modal-close{font-size:22px;color:#999;cursor:pointer;border:none;background:none;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:13px;color:#666;margin-bottom:6px;}
+.field input,.field textarea,.field select{
+  width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;
+  font-size:15px;font-family:inherit;background:#fff;color:#333;
+}
+.field textarea{resize:vertical;min-height:70px;line-height:1.5;}
+.field .hint{font-size:11px;color:#999;margin-top:4px;}
+.avatar-preview{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#eee;}
+.img-row{display:flex;align-items:center;gap:10px;}
+
+/* 小标签 */
+.tag{display:inline-block;background:#f0f3fa;color:var(--accent);border-radius:4px;padding:1px 6px;font-size:11px;margin-left:6px;}
+
+/* 对话气泡(试对话) */
+.chatbox{max-height:320px;overflow-y:auto;background:#f7f7f7;border-radius:10px;padding:10px;margin-bottom:12px;}
+.msg{display:flex;margin-bottom:10px;}
+.msg .bubble{
+  max-width:75%;padding:9px 12px;border-radius:10px;font-size:14px;line-height:1.5;white-space:pre-wrap;
+}
+.msg.me{justify-content:flex-end;}
+.msg.me .bubble{background:#95ec69;border-top-right-radius:2px;}
+.msg.friend .bubble{background:#fff;border-top-left-radius:2px;}
+.msg .who{font-size:11px;color:#999;margin-bottom:2px;}
+
+/* 开关 */
+.switch{position:relative;width:46px;height:26px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.switch .slider{
+  position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:26px;transition:.2s;
+}
+.switch .slider::before{
+  content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;
+  background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2);
+}
+.switch input:checked+.slider{background:var(--accent);}
+.switch input:checked+.slider::before{transform:translateX(20px);}
+
+.toast{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(0,0,0,.78);color:#fff;padding:12px 20px;border-radius:10px;
+  font-size:14px;z-index:200;max-width:80%;text-align:center;
+}
+
+</style></head>
+<body>
+<div id="app" class="app">
+  <!-- 页面头部 -->
+  <header class="top-bar">
+    <div class="top-title" id="topTitle">朋友圈</div>
+  </header>
+
+  <!-- 朋友圈信息流页面 -->
+  <main id="page-feed" class="page">
+    <div class="feed" id="feed"></div>
+    <div id="feedEmpty" class="empty-tip" style="display:none;">还没有动态，发第一条吧 📝</div>
+  </main>
+
+  <!-- 我的个人页 -->
+  <main id="page-profile" class="page" style="display:none;"></main>
+
+  <!-- 设置页 -->
+  <main id="page-settings" class="page" style="display:none;"></main>
+
+  <!-- 底栏 -->
+  <nav class="bottom-bar">
+    <button class="nav-btn" data-page="feed">朋友圈</button>
+    <button class="nav-btn" data-page="profile">我的</button>
+    <button class="nav-btn" data-page="settings">设置</button>
+  </nav>
+
+  <!-- 浮动发布按钮 -->
+  <button id="fabPost" class="fab" title="发布">+</button>
+
+  <!-- 弹窗容器 -->
+  <div id="modal-overlay" class="overlay" style="display:none;">
+    <div class="modal" id="modalBox"></div>
+  </div>
+</div>
+
+<script>
+/* >>> util.js */
+/* ============ util.js - 工具函数 ============ */
+'use strict';
+
+/** 生成唯一 id */
+function uid(prefix) {
+  return (prefix || 'id') + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+/** 生成渐变 svg data URI 作为占位图 */
+function gradientDataURI(c1, c2) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">` +
+    `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/>` +
+    `</linearGradient></defs><rect width="400" height="400" fill="url(#g)"/></svg>`;
+  return 'data:image/svg+xml;base64,' + btoa(svg);
+}
+
+/** 调色板，用于默认头像/背景 */
+const PALETTE = [
+  ['#ff9a9e', '#fad0c4'],
+  ['#a18cd1', '#fbc2eb'],
+  ['#84fab0', '#8fd3f4'],
+  ['#43e97b', '#38f9d7'],
+  ['#fa709a', '#fee140'],
+  ['#30cfd0', '#330867'],
+  ['#f6d365', '#fda085'],
+  ['#fbc2eb', '#a6c1ee'],
+  ['#5ee7df', '#b490ca'],
+  ['#c471f5', '#fa71cd'],
+  ['#00c6ff', '#0072ff'],
+  ['#f83600', '#f9d423'],
+];
+function paletteIdx(i) {
+  return PALETTE[i % PALETTE.length];
+}
+
+/** 汉字首字符作为签名 */
+function nameChar(name) {
+  return (name || '•').charAt(0);
+}
+
+/** 转义 HTML */
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/** 格式化时间：刚刚/几分钟前/今天/日期 */
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return '刚刚';
+  if (m < 60) return m + '分钟前';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + '小时前';
+  const d = new Date(ts);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return '今天';
+  if (d.getFullYear() === now.getFullYear()) {
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  }
+  return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+
+/** 解析文本中的 @昵称 */
+function extractMentions(text) {
+  const names = [];
+  const re = /@([\u4e00-\u9fa5A-Za-z0-9_小女男老哥弟姐妹友朋同学同事老板室友]+)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    names.push(m[1]);
+  }
+  return [...new Set(names)];
+}
+
+/** HTML 转文本中的链接可点 */
+function linkify(text) {
+  const t = esc(text);
+  return t.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
+/** 简单 toast 提示 */
+let toastTimer = null;
+function toast(msg) {
+  const old = document.querySelector('.toast');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.remove(), 1800);
+}
+
+/** 确认框（返回 Promise<boolean>） */
+function confirmDialog(msg) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modalBox').innerHTML =
+      `<div class="modal-title">提示</div>
+       <p style="font-size:15px;line-height:1.6;color:#333;">${esc(msg)}</p>
+       <div style="display:flex;gap:10px;margin-top:18px;">
+         <button class="btn ghost" style="flex:1;margin:0;" id="cfNo">取消</button>
+         <button class="btn" style="flex:1;margin:0;" id="cfYes">确定</button>
+       </div>`;
+    overlay.style.display = 'flex';
+    overlay.querySelector('#cfYes').onclick = () => { overlay.style.display = 'none'; resolve(true); };
+    overlay.querySelector('#cfNo').onclick = () => { overlay.style.display = 'none'; resolve(false); };
+  });
+}
+
+/** 深拷贝 */
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+/* >>> data.js */
+/* ============ data.js - 数据模型 / 本地存储 ============ */
+'use strict';
+
+const STORE_KEY = 'moments_ai_v1';
+
+/** 全局状态 */
+const Store = {
+  profile: null,      // 我的资料
+  friends: [],        // AI 好友列表
+  posts: [],          // 动态列表（降序）
+  comments: [],       // 评论（含楼中楼？用 post 内嵌更简单）
+  settings: {},       // key / 开关 / 频率
+  nextId: 1,
+};
+
+/** 默认"我"的资料 */
+function defaultProfile() {
+  return {
+    name: '我',
+    sig: '分享生活点滴',
+    avatar: null,      // null 则用渐变色占位
+    bg: null,          // 朋友圈背景图
+    avatarIdx: 0,
+    bgIdx: 1,
+  };
+}
+
+/** 内置两个示例 AI 好友（身份可自定义） */
+function defaultFriends() {
+  return [
+    {
+      id: 'f1',
+      name: '小晨',
+      avatar: null,
+      avatarIdx: 2,
+      model: 'deepseek/deepseek-chat:free',
+      identity: '我的大学室友，现在做程序员，嘴贫爱开玩笑，喜欢酸我',
+      tone: '说话带口头禅"啧"，爱用哈哈，偶尔损我一句但很贴心',
+      relation: '认识6年，无话不谈，会互相吐槽',
+      chatlog: '',       // 导入的聊天记录
+      autoPost: true,    // 是否主动发圈
+      autoLike: true,    // 是否自动点赞
+      autoComment: true, // 是否自动评论
+      active: true,      // 启用
+      lastActivity: 0,
+    },
+    {
+      id: 'f2',
+      name: '苏苏',
+      avatar: null,
+      avatarIdx: 4,
+      model: 'openai/gpt-5-mini:free',
+      identity: '一个温柔的女孩子，喜欢猫、做饭和拍照',
+      tone: '说话温柔，用词亲切，偶尔发小表情',
+      relation: '刚认识不久的朋友，正在互相了解',
+      chatlog: '',
+      autoPost: true,
+      autoLike: true,
+      autoComment: true,
+      active: true,
+      lastActivity: 0,
+    },
+  ];
+}
+
+/** 默认设置 */
+function defaultSettings() {
+  return {
+    apiKey: '',
+    referer: 'https://local.moments.ai',
+    title: 'AI朋友圈',
+    aiEnabled: true,        // AI 总开关
+    autoPostEnabled: true,  // AI 主动发圈
+    autoLikeEnabled: true,  // AI 点赞
+    autoCommentEnabled: true,// AI 评论
+    activityEveryMin: 8,    // 主动活动间隔（分钟）
+    lastRun: 0,
+  };
+}
+
+/** 加载或初始化 */
+function loadStore() {
+  let raw;
+  try { raw = localStorage.getItem(STORE_KEY); } catch (e) { raw = null; }
+  if (raw) {
+    try {
+      const s = JSON.parse(raw);
+      Store.profile = s.profile || defaultProfile();
+      Store.friends = s.friends && s.friends.length ? s.friends : defaultFriends();
+      Store.posts = s.posts || [];
+      Store.comments = s.comments || [];
+      Store.settings = Object.assign(defaultSettings(), s.settings || {});
+      Store.nextId = s.nextId || 1;
+      return;
+    } catch (e) { /* 损坏则重置 */ }
+  }
+  Store.profile = defaultProfile();
+  Store.friends = defaultFriends();
+  Store.posts = [];
+  Store.comments = [];
+  Store.settings = defaultSettings();
+  Store.nextId = 1;
+
+  // 预置两条动态便于首次打开有内容
+  storePost({ authorId: 'f1', text: '又是加班到十点的一天…程序员的生活就是这么充实（哭', images: [] });
+  storePost({ authorId: 'me', text: '周末去了趟海边，心情好多了 🌊', images: [] });
+  saveStore();
+}
+
+/** 保存 */
+function saveStore() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(Store));
+  } catch (e) {
+    console.error('save failed', e);
+  }
+}
+
+/** 新增动态，自动补 id/时间；posts 降序 */
+function storePost(p) {
+  const post = Object.assign({
+    id: 'post' + (Store.nextId++),
+    authorId: 'me',
+    text: '',
+    images: [],
+    ts: Date.now(),
+  }, p);
+  Store.posts.unshift(post);
+  // 控制数量上限，避免 localstorage 膨胀
+  if (Store.posts.length > 300) Store.posts.length = 300;
+  saveStore();
+  return post;
+}
+
+/** 删除动态及其评论 */
+function deletePost(postId) {
+  Store.posts = Store.posts.filter(p => p.id !== postId);
+  Store.comments = Store.comments.filter(c => c.postId !== postId);
+  saveStore();
+}
+
+/** 新增评论 */
+function addComment(c) {
+  const comment = Object.assign({
+    id: 'c' + (Store.nextId++),
+    postId: null,
+    authorId: 'me',
+    text: '',
+    ts: Date.now(),
+    replyToId: null,  // 若是对楼中的回复，指向被回复者 authorId
+  }, c);
+  Store.comments.push(comment);
+  if (Store.comments.length > 600) Store.comments.shift();
+  saveStore();
+  return comment;
+}
+
+/** 删除评论 */
+function deleteComment(commentId) {
+  Store.comments = Store.comments.filter(c => c.id !== commentId);
+  saveStore();
+}
+
+/** 某动态的评论（按时间正序） */
+function commentsOf(postId) {
+  return Store.comments.filter(c => c.postId === postId).sort((a, b) => a.ts - b.ts);
+}
+
+/** 某动态的点赞者 id 列表 */
+function likersOf(postId) {
+  const post = Store.posts.find(p => p.id === postId);
+  return post ? (post.likers || []) : [];
+}
+
+/** 是否已点赞 */
+function hasLiked(postId, whoId) {
+  return likersOf(postId).indexOf(whoId) >= 0;
+}
+
+/** 点赞 / 取消点赞 */
+function toggleLike(postId, whoId) {
+  const post = Store.posts.find(p => p.id === postId);
+  if (!post) return;
+  if (!post.likers) post.likers = [];
+  const i = post.likers.indexOf(whoId);
+  if (i >= 0) post.likers.splice(i, 1); else post.likers.push(whoId);
+  saveStore();
+  return post;
+}
+
+/** 按 id 取作者（我或好友） */
+function authorOf(id) {
+  if (id === 'me') return { id: 'me', name: Store.profile.name, avatar: Store.profile.avatar, avatarIdx: Store.profile.avatarIdx, isMe: true };
+  const f = Store.friends.find(f => f.id === id);
+  if (f) return f;
+  return { id: id, name: '未知用户', avatar: null, avatarIdx: 1 };
+}
+
+/** 头像路径 */
+function avatarSrc(a) {
+  if (a.avatar) return a.avatar;
+  const [c1, c2] = paletteIdx(a.avatarIdx || 0);
+  return gradientDataURI(c1, c2);
+}
+
+/** 重置所有数据 */
+function resetAll() {
+  localStorage.removeItem(STORE_KEY);
+  loadStore();
+}
+
+/* >>> modal.js */
+/* ============ modal.js - 弹窗组件 ============ */
+'use strict';
+
+/** 打开一个弹窗，返回 overlay 元素；onShow 用于填充内容 */
+function openModal(title, build) {
+  const overlay = document.getElementById('modal-overlay');
+  const box = document.getElementById('modalBox');
+  box.innerHTML =
+    `<div class="modal-head">
+       <div class="modal-title">${esc(title)}</div>
+       <button class="modal-close" id="modalClose">✕</button>
+     </div>
+     <div id="modalBody"></div>`;
+  overlay.style.display = 'flex';
+  build(box.querySelector('#modalBody'));
+  box.querySelector('#modalClose').onclick = () => closeModal();
+  overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+/** 字段容器 */
+function field(label, hint) {
+  const wrap = document.createElement('div');
+  wrap.className = 'field';
+  let hintHtml = '';
+  if (hint) hintHtml = `<div class="hint">${esc(hint)}</div>`;
+  wrap.innerHTML = `<label>${esc(label)}</label><div class="fbody"></div>${hintHtml}`;
+  return { wrap, body: wrap.querySelector('.fbody') };
+}
+
+/** 文本输入字段 */
+function textField(label, value, placeholder, hint) {
+  const f = field(label, hint);
+  f.body.innerHTML = `<input type="text" value="${esc(value || '')}" placeholder="${esc(placeholder || '')}">`;
+  return f;
+}
+
+/** 多行文本 */
+function areaField(label, value, placeholder, hint) {
+  const f = field(label, hint);
+  f.body.innerHTML = `<textarea placeholder="${esc(placeholder || '')}">${esc(value || '')}</textarea>`;
+  return f;
+}
+
+/* >>> ai.js */
+/* ============ ai.js - OpenRouter 调用 + AI 行为引擎 ============ */
+'use strict';
+
+const OR_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+
+/** 拿到 Key */
+function apiKey() { return (Store.settings.apiKey || '').trim(); }
+
+/**
+ * 构造好友的 system prompt（身份定制核心）
+ * @param {object} f 好友（含 identity/tone/relation/chatlog）
+ */
+function buildSystemPrompt(f) {
+  const lines = [];
+  lines.push(`你是微信里一个叫「${f.name}」的人。你必须完全以这个真实好友的口气和身份说话，不要暴露你是AI或模型。`);
+  lines.push(`身份：${f.identity || ''}`);
+  if (f.tone) lines.push(`说话语气/口头禅/风格：${f.tone}`);
+  if (f.relation) lines.push(`你与用户的关系：${f.relation}`);
+  if (f.chatlog && f.chatlog.trim()) {
+    lines.push(`\n下面是你与用户过往的聊天记录，请从中学习你们的相处方式、他/她怎么称呼你、你的说话习惯、聊过的共同话题，并自然地延续这种感觉和语气：\n${f.chatlog.slice(0, 4000)}`);
+  }
+  lines.push(`\n你要像真人一样偶尔发布朋友圈动态、给用户的动态点赞评论。评论要口语化、简短、符合人设，别太长（不超过40字）。`);
+  return lines.join('\n');
+}
+
+/**
+ * 带重试地请求 OpenRouter JSON 输出
+ * @param {Array} messages 消息
+ * @param {string} model 模型 id
+ * @returns {Promise<object>} 解析后的 JSON
+ */
+async function chatJSON(messages, model) {
+  const body = {
+    model: model || 'deepseek/deepseek-chat:free',
+    messages,
+    response_format: { type: 'json_object' },
+    temperature: 1.0,
+  };
+  try {
+    const res = await fetch(OR_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey(),
+        'HTTP-Referer': Store.settings.referer,
+        'X-OpenRouter-Title': Store.settings.title,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      let err = res.status;
+      try { const j = await res.json(); err = j.error && j.error.message || err; } catch (e) {}
+      throw new Error('API错误 ' + err);
+    }
+    const data = await res.json();
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (!content) throw new Error('空回复');
+    return parseJSON(content);
+  } catch (e) {
+    throw e;
+  }
+}
+
+/** 宽容解析模型返回的 JSON（兼容被 markdown 包裹 / 前后缀脏文本） */
+function parseJSON(text) {
+  let t = String(text).trim();
+  const fenced = t.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) t = fenced[1].trim();
+  const start = t.search(/[\[{]/);
+  if (start > 0) t = t.slice(start);
+  return JSON.parse(t);
+}
+
+/**
+ * 让 AI 好友对某条动态发一条评论
+ * @returns {Promise<string>} 评论文本
+ */
+async function aiComment(friend, post) {
+  const me = Store.profile.name;
+  const postAuthor = authorOf(post.authorId);
+  const postAuthorName = postAuthor.name;
+  const system = buildSystemPrompt(friend);
+  const userMsg =
+    `我在朋友圈看到一条动态：\n` +
+    `发布者：${postAuthorName}\n内容：${post.text || '(图片动态)'}\n` +
+    (post.images && post.images.length ? `附了 ${post.images.length} 张图\n` : '') +
+    `已有评论：${commentsOf(post.id).map(c => authorOf(c.authorId).name + '：' + c.text).join('；') || '无'}\n\n` +
+    `现在你（作为${friend.name}）要评论这条动态。请按你的人设，写一句简短自然的评论（不超过40字，体现性格）。\n` +
+    `只输出 JSON：{"comment":"你的评论内容"}`;
+  const r = await chatJSON([{ role: 'system', content: system }, { role: 'user', content: userMsg }], friend.model);
+  return (r.comment || '').trim();
+}
+
+/**
+ * 让 AI 好友主动发一条朋友圈
+ * @returns {Promise<string>} 动态文本
+ */
+async function aiPost(friend) {
+  const me = Store.profile.name;
+  const system = buildSystemPrompt(friend);
+  const userMsg =
+    `你要像真人一样发一条微信朋友圈动态。内容要符合你「${friend.name}」的人设：可以是生活分享、吐槽、心情、和${me}之间的小事，口语化、自然，适。不要提"分享"、不要带#话题标签，就是随手发的日常。\n` +
+    `只输出 JSON：{"text":"动态内容"}`;
+  const r = await chatJSON([{ role: 'system', content: system }, { role: 'user', content: userMsg }], friend.model);
+  return (r.text || '').trim();
+}
+
+/**
+ * 让 AI 好友回复一条用户对它的评论 / 用户@它
+ */
+async function aiReply(friend, replyToText, context) {
+  const system = buildSystemPrompt(friend);
+  const userMsg =
+    `${replyToText}\n` +
+    (context ? `（关于这条动态：${context}）\n` : '') +
+    `请以${friend.name}的人设回复一句（不超过40字）。只输出 JSON：{"reply":"你的回复"}`;
+  const r = await chatJSON([{ role: 'system', content: system }, { role: 'user', content: userMsg }], friend.model);
+  return (r.reply || '').trim();
+}
+
+/** 是否检测到模型支持工具调用（用于提示） */
+function logError(label, e) {
+  console.error('[' + label + ']', e);
+}
+
+/** 用免费模型测试 Key 有效性 */
+async function testKey(key) {
+  const res = await fetch(OR_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key,
+    },
+    body: JSON.stringify({
+      model: 'deepseek/deepseek-chat:free',
+      messages: [{ role: 'user', content: 'hi' }],
+      max_tokens: 2,
+    }),
+  });
+  if (!res.ok) {
+    let err = 'HTTP ' + res.status;
+    try { const j = await res.json(); err = (j.error && j.error.message) || err; } catch (e) {}
+    throw new Error(err);
+  }
+  return true;
+}
+
+/* >>> identity.js */
+/* ============ identity.js - 聊天记录导入解析 + 身份辅助 ============ */
+'use strict';
+
+/**
+ * 解析粘帖/导入的聊天记录，识别常见"说话人: 内容"格式，
+ * 统一为 "说话人:内容"，保证 AI 训练用文本清晰。
+ */
+function parseChatLog(raw) {
+  const text = String(raw || '');
+  // 支持的头像标记
+  const SPEAKER_RE =
+    /^(?:(\d{1,2}[-/]\d{1,2})(?: \d{1,2}:\d{2})?\s*)?([^：:]{1,12})[：:]\s*(.+)$/;
+  const lines = text.split(/\r?\n/);
+  const out = [];
+  for (let ln of lines) {
+    ln = ln.trim();
+    if (!ln) continue;
+    const m = ln.match(SPEAKER_RE);
+    if (m) {
+      const who = m[2].trim();
+      const content = m[3].trim();
+      if (content) out.push(who + '：' + content);
+    } else {
+      // 无法识别说话人的行，直接保留（可能是上一句的延续）
+      out.push(ln);
+    }
+  }
+  return out.join('\n');
+}
+
+/**
+ * 从聊天记录猜测"我"的名字：统计出现最多、且不是常见好友名的说话人。
+ * 简化：只把第一个非自身常见名标记忽略，这里默认"我"。
+ */
+function guessMyNames(parsedLog) {
+  const names = new Set();
+  const re = /^([^：:]{1,12})：/gm;
+  let m;
+  while ((m = re.exec(parsedLog))) names.add(m[1]);
+  return [...names];
+}
+
+/* >>> feed.js */
+/* ============ feed.js - 朋友圈渲染 + 用户交互 ============ */
+'use strict';
+
+/** 渲染朋友圈信息流 */
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '';
+  if (!Store.posts.length) {
+    document.getElementById('feedEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('feedEmpty').style.display = 'none';
+
+  const frag = document.createDocumentFragment();
+  Store.posts.forEach(post => frag.appendChild(buildPostEl(post)));
+  // 防止 AI 回复等频繁全量重绘闪烁，先隐藏再插入
+  feed.appendChild(frag);
+}
+
+/** 构建一条动态的 DOM */
+function buildPostEl(post) {
+  const me = authorOf('me');
+  const author = authorOf(post.authorId);
+  const isMine = post.authorId === 'me';
+  const el = document.createElement('div');
+  el.className = 'post';
+  el.setAttribute('data-post', post.id);
+
+  const likers = likersOf(post.id);
+  const comments = commentsOf(post.id);
+
+  // 头部
+  const head = document.createElement('div');
+  head.className = 'post-head';
+  head.innerHTML =
+    `<img class="avatar" src="${avatarSrc(author)}">
+     <div style="margin-left:10px;">
+       <div class="post-name">${esc(author.name)}</div>
+       <div class="post-meta">${timeAgo(post.ts)}</div>
+     </div>
+     ${isMine ? `<button class="del-post" data-id="${post.id}" style="margin-left:auto;border:none;background:none;color:#bbb;font-size:14px;cursor:pointer;">⋮</button>` : ''}`;
+  el.appendChild(head);
+
+  // 正文
+  if (post.text) {
+    const body = document.createElement('div');
+    body.className = 'post-body';
+    body.innerHTML = `<div class="post-text">${linkifyWithMentions(post.text)}</div>`;
+    el.appendChild(body);
+  }
+  // 图片
+  if (post.images && post.images.length) {
+    const imgWrap = document.createElement('div');
+    imgWrap.className = post.images.length === 1 ? 'post-image' : 'post-images';
+    post.images.forEach(src => {
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.onclick = () => openModal('图片预览', (b) => {
+        b.innerHTML = `<img src="${esc(src)}" style="width:100%;border-radius:8px;">`;
+      });
+      img.src = src;
+      imgWrap.appendChild(img);
+    });
+    el.appendChild(imgWrap);
+  }
+
+  // 操作条
+  const actions = document.createElement('div');
+  actions.className = 'post-actions';
+  const liked = hasLiked(post.id, 'me');
+  actions.innerHTML =
+    `<span class="post-time">${timeAgo(post.ts)}</span>
+     <div class="action-btns">
+       <button data-act="comment" data-id="${post.id}">💬 评论</button>
+       <button data-act="like" data-id="${post.id}" style="${liked ? 'color:#e64340;' : ''}">${liked ? '❤️ 已赞' : '🤍 赞'}</button>
+     </div>`;
+  el.appendChild(actions);
+
+  // 点赞列表
+  if (likers.length) {
+    const lb = document.createElement('div');
+    lb.className = 'like-bar';
+    const names = likers.map(wid => authorOf(wid).name);
+    lb.innerHTML = `❤️ <span class="likers">${names.map(n => esc(n)).join('、')}</span> `;
+    el.appendChild(lb);
+  }
+
+  // 评论区
+  if (comments.length) {
+    const cb = document.createElement('div');
+    cb.className = 'comment-bar';
+    comments.forEach(c => {
+      const ca = authorOf(c.authorId);
+      const row = document.createElement('div');
+      row.className = 'comment';
+      row.setAttribute('data-cid', c.id);
+      let html;
+      if (c.replyToId && c.replyToId !== c.authorId) {
+        const target = authorOf(c.replyToId);
+        html = `<span class="cname">${esc(ca.name)}</span> 回复 <span class="reply-to">${esc(target.name)}</span>：<span class="ctext">${esc(c.text)}</span>`;
+      } else {
+        html = `<span class="cname">${esc(ca.name)}</span>：<span class="ctext">${esc(c.text)}</span>`;
+      }
+      row.innerHTML = html + (c.authorId === 'me' || isMine ?
+        `<div class="creply-target"><a data-rep="${c.id}" style="color:#999;font-size:12px;cursor:pointer;">回复</a> <a data-delc="${c.id}" style="color:#bbb;font-size:12px;cursor:pointer;margin-left:8px;">删除</a></div>` :
+        `<div class="creply-target"><a data-rep="${c.id}" style="color:#999;font-size:12px;cursor:pointer;">回复</a></div>`);
+      cb.appendChild(row);
+    });
+
+    // 事件委托到 comment-bar
+    cb.addEventListener('click', onCommentAction);
+    el.appendChild(cb);
+  }
+
+  // 动态级事件委托
+  head.addEventListener('click', (e) => {
+    if (e.target.classList.contains('del-post')) onDeletePost(e.target.dataset.id);
+  });
+  actions.addEventListener('click', onPostAction);
+  return el;
+}
+
+/** 连接字符替换 + 提及高亮 */
+function linkifyWithMentions(text) {
+  let t = esc(text);
+  // @ 提及用蓝色
+  t = t.replace(/@([\u4e00-\u9fa5A-Za-z0-9_]+)/g, '<span style="color:#576b95;">@$1</span>');
+  // 链接可点
+  t = t.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  return t;
+}
+
+/** 帖子操作：点赞/评论 */
+function onPostAction(e) {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const act = btn.dataset.act;
+  if (act === 'like') {
+    toggleLike(id, 'me');
+    renderFeed();
+    maybeAIReact(id); // AI 可能点个赞
+  } else if (act === 'comment') {
+    openCommentModal(id, null);
+  }
+}
+
+/** 评论区内操作：回复/删除 */
+function onCommentAction(e) {
+  const rep = e.target.closest('a[data-rep]');
+  const del = e.target.closest('a[data-delc]');
+  const cid = rep ? rep.dataset.rep : (del ? del.dataset.delc : null);
+  if (!cid) return;
+  if (rep) {
+    const postId = rep.closest('.comment').closest('.post').dataset.post;
+    openCommentModal(postId, cid, true);
+  } else if (del) {
+    (async () => {
+      if (await confirmDialog('删除这条评论？')) {
+        deleteComment(cid);
+        renderFeed();
+      }
+    })();
+  }
+}
+
+/** 打开评论输入框；replyToCommentId 为空则普通评论 */
+function openCommentModal(postId, replyToCommentId, isReply) {
+  const post = Store.posts.find(p => p.id === postId);
+  if (!post) return;
+  let replyTarget = null;
+  if (isReply && replyToCommentId) {
+    const c = Store.comments.find(c => c.id === replyToCommentId);
+    if (c) replyTarget = c;
+  }
+  openModal('发表评论', (body) => {
+    const ta = document.createElement('textarea');
+    ta.placeholder = replyTarget ? `回复 ${authorOf(replyTarget.authorId).name}…` : '说点什么…';
+    ta.style.minHeight = '60px';
+    body.appendChild(ta);
+
+    const send = document.createElement('button');
+    send.className = 'btn';
+    send.textContent = '发送';
+    body.appendChild(send);
+
+    const input = ta;
+    const doSend = async () => {
+      const text = input.value.trim();
+      if (!text) return toast('先写点内容');
+      const attrs = { postId, authorId: 'me', text };
+      // 检测是否 @了某好友
+      const mentions = extractMentions(text);
+      if ((replyTarget && replyTarget.authorId !== 'me') || (mentions.length)) {
+        const friendId = replyTarget && replyTarget.authorId !== 'me'
+          ? replyTarget.authorId
+          : (Store.friends.find(f => mentions.includes(f.name)) || {}).id;
+        if (friendId) attrs.replyToId = friendId;
+      }
+      addComment(attrs);
+      closeModal();
+      renderFeed();
+      // 若提到/回复了某 AI 好友，触发 AI 回复
+      if (attrs.replyToId) {
+        const friend = Store.friends.find(f => f.id === attrs.replyToId);
+        if (friend) aiReplyAndAdd(friend, post, text, replyTarget ? replyTarget.text : null);
+      }
+    };
+    send.onclick = doSend;
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) doSend();
+    };
+    input.focus();
+  });
+}
+
+/** 删除动态 */
+async function onDeletePost(postId) {
+  if (await confirmDialog('删除这条动态？')) {
+    deletePost(postId);
+    renderFeed();
+  }
+}
+
+/** 我发一条新动态 */
+function openComposeModal() {
+  openModal('发表朋友圈', (body) => {
+    const ta = document.createElement('textarea');
+    ta.placeholder = '这一刻的想法…';
+    ta.style.minHeight = '100px';
+    body.appendChild(ta);
+
+    // 图片链接输入
+    const imgInput = document.createElement('input');
+    imgInput.type = 'text';
+    imgInput.placeholder = '图片URL（可选，可多个以空格分隔）';
+    imgInput.style.marginTop = '10px';
+    body.appendChild(imgInput);
+
+    const tags = document.createElement('div');
+    tags.style.marginTop = '10px';
+    tags.innerHTML =
+      `<span style="font-size:13px;color:#666;">@好友：</span>` +
+      Store.friends.map(f => `<button class="tag" data-name="${esc(f.name)}" style="cursor:pointer;border:none;">@${esc(f.name)}</button>`).join(' ');
+    body.appendChild(tags);
+    tags.querySelectorAll('.tag').forEach(b => b.onclick = () => {
+      const name = b.dataset.name;
+      ta.value += (ta.value && !ta.value.endsWith(' ') ? ' ' : '') + '@' + name + ' ';
+      ta.focus();
+    });
+
+    const send = document.createElement('button');
+    send.className = 'btn';
+    send.textContent = '发布';
+    body.appendChild(send);
+
+    send.onclick = async () => {
+      const text = ta.value.trim();
+      const imgUrl = imgInput.value.trim();
+      if (!text && !imgUrl) return toast('写点内容吧');
+      const images = imgUrl ? imgUrl.split(/\s+/).filter(Boolean) : [];
+      const post = storePost({ authorId: 'me', text, images });
+      closeModal();
+      renderFeed();
+      // 提及时触发 AI
+      const mentions = extractMentions(text);
+      const friend = Store.friends.find(f => mentions.includes(f.name));
+      if (friend) aiCommentAndAdd(friend, post);
+      else maybeAIReact(post.id); // 无 @ 时 AI 可能点赞/评论
+    };
+    ta.focus();
+  });
+}
+
+/** AI 点赞/评论（概率触发） */
+function maybeAIReact(postId) {
+  if (!Store.settings.aiEnabled) return;
+  const post = Store.posts.find(p => p.id === postId);
+  if (!post) return;
+  const activeFriends = Store.friends.filter(f => f.active);
+  activeFriends.forEach((friend, i) => {
+    setTimeout(() => {
+      if (Math.random() < 0.5 && Store.settings.autoLikeEnabled) {
+        if (!hasLiked(postId, friend.id)) toggleLike(postId, friend.id);
+      }
+      if (Math.random() < 0.4 && Store.settings.autoCommentEnabled) {
+        aiCommentAndAdd(friend, post);
+      }
+      renderFeed();
+    }, 800 + i * 1200);
+  });
+}
+
+/** 让 AI 好友评论并落地 */
+async function aiCommentAndAdd(friend, post) {
+  try {
+    const text = await aiComment(friend, post);
+    if (!text) return;
+    addComment({ postId: post.id, authorId: friend.id, text });
+    renderFeed();
+  } catch (e) { logError('aiComment', e); }
+}
+
+/** 让 AI 好友回复某条评论 */
+async function aiReplyAndAdd(friend, post, userText, replyTo) {
+  try {
+    const context = post.text;
+    const reply = await aiReply(friend,
+      replyTo ? `用户对你说：「${userText}」（你对用户说过：「${replyTo}」）` : `用户对你说：「${userText}」`,
+      context);
+    if (!reply) return;
+    addComment({ postId: post.id, authorId: friend.id, text: reply, replyToId: 'me' });
+    renderFeed();
+  } catch (e) { logError('aiReply', e); }
+}
+
+/* >>> profile.js */
+/* ============ profile.js - 我的个人页 ============ */
+'use strict';
+
+/** 渲染个人信息页 */
+function renderProfile() {
+  const page = document.getElementById('page-profile');
+  const p = Store.profile;
+  const myPosts = Store.posts.filter(x => x.authorId === 'me');
+  const myTotal = Store.friends.length + 1; // 好友数 + 我
+
+  const postCards = myPosts.map(post => {
+    const c = commentsOf(post.id).length;
+    const l = likersOf(post.id).length;
+    return `<div style="background:#fff;margin:8px 12px;border-radius:10px;padding:12px;display:flex;align-items:center;">
+      <div style="flex:1">
+        <div style="color:#576b95;font-weight:600;font-size:13px;">${timeAgo(post.ts)}</div>
+        <div style="font-size:14px;margin-top:4px;color:#333;word-break:break-all;">${esc(post.text || '(图片动态)')}</div>
+      </div>
+      <div style="font-size:12px;color:#999;text-align:right;flex-shrink:0;">
+        <div>❤️ ${l}</div><div>💬 ${c}</div>
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty-tip">你还没有发过动态</div>`;
+
+  page.innerHTML = `
+    <div class="profile">
+      <img class="profile-banner" src="${avatarSrc({avatar:p.bg, avatarIdx:p.bgIdx})}" onclick="editBg()">
+      <div class="profile-info">
+        <img class="profile-avatar" src="${avatarSrc(p)}" onclick="editAvatar('me')">
+        <div class="profile-detail" onclick="editProfile()">
+          <div class="profile-name">${esc(p.name)}</div>
+          <div class="profile-sig">${esc(p.sig || '')}</div>
+        </div>
+        <div class="profile-tag">
+          <div>动态 ${myPosts.length}</div>
+        </div>
+      </div>
+      <div style="padding:6px 14px;display:flex;gap:10px;">
+        <button class="btn ghost" style="flex:1;margin:0;padding:9px;" onclick="editProfile()">编辑资料</button>
+        <button class="btn ghost" style="flex:1;margin:0;padding:9px;" onclick="editBg()">背景图</button>
+      </div>
+      <div class="set-group-title">我的朋友圈（${myPosts.length}）</div>
+      ${postCards}
+    </div>`;
+}
+
+/** 编辑我的资料 */
+function editProfile() {
+  openModal('编辑资料', (body) => {
+    const name = textField('昵称', Store.profile.name, '输入昵称');
+    const sig = textField('个性签名', Store.profile.sig, '一句话介绍自己');
+    const avatarRow = field('头像','支持粘贴图片URL 或 本地上传');
+    avatarRow.body.innerHTML =
+      `<img class="avatar-preview" id="prevMy" src="${avatarSrc(Store.profile)}">
+       <input type="text" id="avatarUrl" placeholder="图片URL" style="flex:1;min-width:0;">
+       <input type="file" accept="image/*" id="avatarFile" style="display:none;">
+       <button class="btn ghost" style="width:auto;padding:6px 10px;margin:0;" onclick="document.getElementById('avatarFile').click()">本地上传</button>`;
+    body.append(name.wrap, sig.wrap, avatarRow.wrap);
+
+    const urlIn = body.querySelector('#avatarUrl');
+    const prev = body.querySelector('#prevMy');
+    urlIn.oninput = () => { if (urlIn.value.trim()) prev.src = urlIn.value.trim(); };
+    body.querySelector('#avatarFile').onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = () => { prev.src = r.result; urlIn.value = r.result; };
+      r.readAsDataURL(file);
+    };
+
+    const save = document.createElement('button');
+    save.className = 'btn'; save.textContent = '保存';
+    save.onclick = () => {
+      Store.profile.name = name.body.querySelector('input').value.trim() || '我';
+      Store.profile.sig = sig.body.querySelector('input').value.trim();
+      Store.profile.avatar = urlIn.value.trim() || null;
+      saveStore(); closeModal(); renderProfile(); refreshTopBar();
+    };
+    body.appendChild(save);
+  });
+}
+
+/** 编辑我的朋友圈背景 */
+function editBg() {
+  openModal('设置朋友圈背景', (body) => {
+    const urlIn = document.createElement('input');
+    urlIn.type = 'text'; urlIn.placeholder = '背景图片URL';
+    urlIn.value = Store.profile.bg || '';
+    body.appendChild(urlIn);
+    const fileBtn = document.createElement('input');
+    fileBtn.type = 'file'; fileBtn.accept = 'image/*'; fileBtn.style.display = 'none';
+    body.appendChild(fileBtn);
+    const btn2 = document.createElement('button');
+    btn2.className = 'btn ghost';
+    btn2.textContent = '本地上传';
+    btn2.style.marginTop = '10px';
+    btn2.onclick = () => fileBtn.click();
+    body.appendChild(btn2);
+    fileBtn.onchange = (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = () => urlIn.value = r.result;
+      r.readAsDataURL(f);
+    };
+    const use = document.createElement('button');
+    use.className = 'btn'; use.textContent = '应用';
+    use.onclick = () => {
+      Store.profile.bg = urlIn.value.trim() || null;
+      saveStore(); closeModal(); renderProfile();
+    };
+    body.appendChild(use);
+  });
+}
+
+/** 编辑任一作者（我或好友）的头像 */
+function editAvatar(whoId) {
+  if (whoId === 'me') editProfile();
+}
+
+/* >>> settings.js */
+/* ============ settings.js - 设置页 / 好友管理 / 身份 ============ */
+'use strict';
+
+/** 渲染设置页 */
+function renderSettings() {
+  const page = document.getElementById('page-settings');
+  const s = Store.settings;
+  const friendRows = Store.friends.map(f => `
+    <div class="set-row" style="cursor:pointer;">
+      <div style="display:flex;align-items:center;flex:1;" onclick="editFriend('${f.id}')">
+        <img class="avatar" style="width:36px;height:36px;border-radius:6px;margin-right:10px;" src="${avatarSrc(f)}">
+        <div>
+          <div style="font-size:15px;font-weight:600;">${esc(f.name)}</div>
+          <div style="font-size:12px;color:#999;">${esc(f.model)}</div>
+        </div>
+        <span class="tag" style="margin-left:6px;">${f.active ? '启用' : '停用'}</span>
+      </div>
+      <div style="display:flex;gap:12px;flex-shrink:0;">
+        <button style="color:#576b95;border:none;background:none;font-size:13px;cursor:pointer;" onclick="toggleFriend('${f.id}')">${f.active ? '停用' : '启用'}</button>
+        <button style="color:#fa5151;border:none;background:none;font-size:13px;cursor:pointer;" onclick="delFriend('${f.id}')">删除</button>
+      </div>
+    </div>`).join('');
+
+  page.innerHTML = `
+    <div class="settings">
+      <div class="set-group-title">OpenRouter 配置</div>
+      <div class="set-group">
+        <div class="set-row">
+          <span class="label">API Key</span>
+          <span class="value" style="color:${s.apiKey ? '#30a46c' : '#999'};">${s.apiKey ? '已保存(' + s.apiKey.length + '位)' : '未配置'}</span>
+          <button onclick="openKeyModal()">${s.apiKey ? '修改' : '设置'}</button>
+        </div>
+        <div class="set-row" style="justify-content:flex-start;">
+          <span style="font-size:13px;color:#999;">在 openrouter.ai 注册获取 Key，支持微信/支付宝充值，免费模型可用</span>
+        </div>
+      </div>
+
+      <div class="set-group-title">AI 活跃行为</div>
+      <div class="set-group">
+        ${switchRow('AI 总开关', 'aiSwitch', s.aiEnabled, 'aiEnabled')}
+        ${switchRow('AI 主动发朋友圈', 'autoPost', s.autoPostEnabled, 'autoPostEnabled')}
+        ${switchRow('AI 点赞', 'autoLike', s.autoLikeEnabled, 'autoLikeEnabled')}
+        ${switchRow('AI 评论', 'autoComment', s.autoCommentEnabled, 'autoCommentEnabled')}
+        <div class="set-row">
+          <span class="label">活动频率</span>
+          <select id="activityFreq" style="font-size:14px;">
+            ${[3,5,8,15,30].map(m => `<option value="${m}" ${s.activityEveryMin===m?'selected':''}>${m} 分钟</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="set-group-title">AI 好友（${Store.friends.length}）</div>
+      <div class="set-group">
+        ${friendRows || '<div class="set-row"><span style="color:#999;">还没有好友</span></div>'}
+        <div class="set-row" onclick="addFriend()" style="justify-content:center;">
+          <span style="color:#576b95;font-size:15px;">＋ 新建 AI 好友</span>
+        </div>
+      </div>
+
+      <div class="set-group-title">数据</div>
+      <div class="set-group">
+        <div class="set-row" onclick="exportData()">
+          <span class="label">导出数据（JSON）</span><span style="color:#576b95;">导出</span>
+        </div>
+        <div class="set-row" onclick="document.getElementById('importFile').click()">
+          <span class="label">导入数据（JSON）</span><span style="color:#576b95;">导入</span>
+        </div>
+        <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importData(event)">
+        <div class="set-row" onclick="doReset()">
+          <span class="label" style="color:#fa5151;">重置全部数据</span><span style="color:#fa5151;">重置</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function switchRow(label, id, checked, key) {
+  return `<div class="set-row">
+    <span class="label">${label}</span>
+    <label class="switch"><input type="checkbox" id="${id}" ${checked?'checked':''}><span class="slider"></span></label>
+  </div>`;
+}
+
+/** 设置页绑定事件（在每次 renderSettings 后调用） */
+function bindSettingsEvents() {
+  const toggle = (id, key) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.onchange = () => {
+      Store.settings[key] = el.checked;
+      saveStore();
+      if (key === 'activityEveryMin') refreshActivityTimer();
+    };
+  };
+  toggle('aiSwitch', 'aiEnabled');
+  toggle('autoPost', 'autoPostEnabled');
+  toggle('autoLike', 'autoLikeEnabled');
+  toggle('autoComment', 'autoCommentEnabled');
+  const freq = document.getElementById('activityFreq');
+  if (freq) freq.onchange = () => {
+    Store.settings.activityEveryMin = parseInt(freq.value, 10) || 8;
+    saveStore();
+    refreshActivityTimer();
+  };
+}
+
+/** Key 配置弹窗 */
+function openKeyModal() {
+  openModal('OpenRouter API Key', (body) => {
+    const key = textField('API Key', Store.settings.apiKey, 'sk-or-...', '在 openrouter.ai → Keys 创建，支持信用卡/支付宝');
+    const ref = textField('HTTP-Referer（选填）', Store.settings.referer, 'https://local.moments.ai');
+    const ttl = textField('X-OpenRouter-Title（选填）', Store.settings.title, 'AI朋友圈');
+    body.append(key.wrap, ref.wrap, ttl.wrap);
+
+    const test = document.createElement('button');
+    test.className = 'btn ghost'; test.textContent = '测试连接';
+    body.appendChild(test);
+    const save = document.createElement('button');
+    save.className = 'btn'; save.textContent = '保存'; save.style.marginTop = '8px';
+    body.appendChild(save);
+
+    test.onclick = async () => {
+      const k = key.body.querySelector('input').value.trim();
+      if (!k) return toast('先填 Key');
+      test.textContent = '测试中…';
+      try {
+        await testKey(k);
+        toast('✅ 连接成功');
+      } catch (e) {
+        toast('❌ ' + e.message);
+      }
+      test.textContent = '测试连接';
+    };
+    save.onclick = () => {
+      Store.settings.apiKey = key.body.querySelector('input').value.trim();
+      Store.settings.referer = ref.body.querySelector('input').value.trim() || 'https://local.moments.ai';
+      Store.settings.title = ttl.body.querySelector('input').value.trim() || 'AI朋友圈';
+      saveStore(); closeModal(); renderSettings();
+      toast('已保存');
+    };
+  });
+}
+
+/** 新建好友 */
+function addFriend() {
+  Store.friends.push({
+    id: 'f' + Date.now().toString(36),
+    name: '新好友',
+    avatar: null, avatarIdx: Math.floor(Math.random() * PALETTE.length),
+    model: 'deepseek/deepseek-chat:free',
+    identity: '', tone: '', relation: '', chatlog: '',
+    autoPost: true, autoLike: true, autoComment: true,
+    active: true, lastActivity: 0,
+  });
+  saveStore();
+  renderSettings();
+  editFriend(Store.friends[Store.friends.length - 1].id);
+}
+
+/** 编辑好友（身份核心） */
+function editFriend(fid) {
+  const f = Store.friends.find(x => x.id === fid);
+  if (!f) return;
+  openModal('编辑好友「' + f.name + '」', (body) => {
+    const name = textField('昵称', f.name, '好友昵称');
+    const model = textField('OpenRouter 模型', f.model, '如 deepseek/deepseek-chat:free', '可用免费模型，或到 openrouter.ai/models 查');
+    const identity = areaField('身份 / 人设（必填，一句话即可）', f.identity, '例：我的大学室友，程序员，嘴贫爱开玩笑', '只写这一句也行，AI 就靠它做朋友圈人设');
+    const tone = areaField('性格 / 语气（选填）', f.tone, '例：口头禅"啧"，爱吐槽', '可以自由写，不用分条');
+    const relation = areaField('与你的关系（选填）', f.relation, '例：认识6年，无话不谈', '写清 AI 和你的关系，朋友圈会更贴');
+    const avatar = field('头像', '粘贴图片URL 或 本地上传');
+    avatar.body.innerHTML =
+      `<img class="avatar-preview" id="afPrev" src="${avatarSrc(f)}">
+       <input type="text" id="afUrl" placeholder="图片URL" style="flex:1;min-width:0;" value="${esc(f.avatar || '')}">
+       <input type="file" id="afFile" accept="image/*" style="display:none;">
+       <button class="btn ghost" style="width:auto;padding:6px 10px;margin:0;" onclick="document.getElementById('afFile').click()">上传</button>`;
+
+    // 聊天记录导入
+    const log = areaField('聊天记录（选填，用于AI更懂你）', f.chatlog, '格式：我:xxx / 好友名:xxx，每行一条。或点下方导入文件', `AI 会从记录学你们的相处、语气、共同话题`);
+    const importBtn = document.createElement('button');
+    importBtn.className = 'btn ghost';
+    importBtn.textContent = '📄 从文件导入聊天记录';
+    importBtn.style.marginTop = '4px';
+
+    const chatHint = document.createElement('div');
+    chatHint.className = 'hint';
+    chatHint.style.marginTop = '4px';
+
+    // 试对话
+    const tryBox = document.createElement('div');
+    tryBox.className = 'chatbox';
+    tryBox.id = 'tryBox';
+    tryBox.innerHTML = `<div style="color:#999;font-size:12px;text-align:center;">保存前可先跟这个好友试聊一句，确认人设对不对</div>`;
+    const tryInput = document.createElement('input');
+    tryInput.type = 'text'; tryInput.placeholder = '对它说一句话…'; tryInput.style.marginTop = '8px';
+    const tryBtn = document.createElement('button');
+    tryBtn.className = 'btn ghost'; tryBtn.textContent = '试对话'; tryBtn.style.marginTop = '8px';
+
+    const save = document.createElement('button');
+    save.className = 'btn'; save.textContent = '保存好友'; save.style.marginTop = '12px';
+
+    body.append(name.wrap, model.wrap, identity.wrap, tone.wrap, relation.wrap, avatar.wrap, log.wrap, importBtn, chatHint, tryBox, tryInput, tryBtn, save);
+
+    // 头像 URL 联动
+    const prev = body.querySelector('#afPrev');
+    const urlIn = body.querySelector('#afUrl');
+    urlIn.oninput = () => { if (urlIn.value.trim()) prev.src = urlIn.value.trim(); };
+    body.querySelector('#afFile').onchange = (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      const r = new FileReader();
+      r.onload = () => { prev.src = r.result; urlIn.value = r.result; };
+      r.readAsDataURL(file);
+    };
+
+    // 聊天记录文件导入
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file'; fileInput.accept = '.txt,.json,.md'; fileInput.style.display = 'none';
+    body.appendChild(fileInput);
+    importBtn.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      const r = new FileReader();
+      r.onload = () => {
+        const parsed = parseChatLog(String(r.result));
+        const target = log.body.querySelector('textarea');
+        target.value = (target.value ? target.value + '\n' : '') + parsed;
+        chatHint.textContent = '已导入 ' + file.name + '（' + parsed.length + '字）';
+      };
+      r.readAsText(file);
+    };
+
+    // 试对话：利用当前填写的身份
+    const makeFriend = () => Object.assign(clone(f), {
+      name: name.body.querySelector('input').value.trim() || f.name,
+      identity: identity.body.querySelector('textarea').value.trim(),
+      tone: tone.body.querySelector('textarea').value.trim(),
+      relation: relation.body.querySelector('textarea').value.trim(),
+      chatlog: log.body.querySelector('textarea').value.trim(),
+      list: null,
+    });
+
+    const appendMsg = (who, text) => {
+      const row = document.createElement('div');
+      row.className = 'msg ' + (who === 'me' ? 'me' : 'friend');
+      row.innerHTML = who === 'me'
+        ? `<div class="bubble">${esc(text)}</div>`
+        : `<div style="max-width:78%;"><div class="bubble">${esc(text)}</div><div class="who">${esc(makeFriend().name)}</div></div>`;
+      tryBox.appendChild(row);
+      tryBox.scrollTop = tryBox.scrollHeight;
+    };
+
+    tryBtn.onclick = async () => {
+      const q = tryInput.value.trim();
+      if (!q) return toast('输入要说的话');
+      if (!apiKey()) return toast('请先在设置里配置 API Key');
+      appendMsg('me', q);
+      tryInput.value = '';
+      const tmp = makeFriend();
+      try {
+        const reply = await aiReply(tmp, '用户对你说：「' + q + '」', '试对话中');
+        appendMsg('friend', reply || '(没有回复)');
+      } catch (err) {
+        appendMsg('friend', '⚠️ ' + err.message);
+      }
+    };
+    tryInput.onkeydown = (e) => { if (e.key === 'Enter') tryBtn.click(); };
+
+    // 保存
+    save.onclick = () => {
+      f.name = name.body.querySelector('input').value.trim() || '好友';
+      f.model = model.body.querySelector('input').value.trim() || 'deepseek/deepseek-chat:free';
+      f.identity = identity.body.querySelector('textarea').value.trim();
+      f.tone = tone.body.querySelector('textarea').value.trim();
+      f.relation = relation.body.querySelector('textarea').value.trim();
+      f.avatar = urlIn.value.trim() || null;
+      f.chatlog = log.body.querySelector('textarea').value.trim();
+      saveStore(); closeModal(); renderSettings();
+      toast('已保存');
+    };
+  });
+}
+
+function toggleFriend(fid) {
+  const f = Store.friends.find(x => x.id === fid);
+  if (f) { f.active = !f.active; saveStore(); renderSettings(); }
+}
+async function delFriend(fid) {
+  const f = Store.friends.find(x => x.id === fid);
+  if (!f) return;
+  if (await confirmDialog('删除好友「' + f.name + '」？他的动态和点赞评论会保留（作者显示为已删除用户）。')) {
+    Store.friends = Store.friends.filter(x => x.id !== fid);
+    saveStore(); renderSettings();
+  }
+}
+
+/* --------- 数据导出/导入/重置 --------- */
+
+function exportData() {
+  const data = JSON.stringify({ ...clone(Store), __export: true }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'moments-backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('已导出');
+}
+
+function importData(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const data = JSON.parse(String(r.result));
+      if (!data.__export) throw new Error('not-export-file');
+      delete data.__export;
+      Object.assign(Store, data);
+      saveStore();
+      renderFeed(); renderProfile(); renderSettings(); renderProfile();
+      toast('导入成功');
+    } catch (e) {
+      toast('导入失败：文件格式不对');
+    }
+  };
+  r.readAsText(file);
+  ev.target.value = '';
+}
+
+async function doReset() {
+  if (await confirmDialog('确定清空全部数据（含朋友圈、好友、设置）？此操作不可恢复。')) {
+    resetAll();
+    renderFeed(); renderProfile(); renderSettings();
+    toast('已重置');
+  }
+}
+
+/* >>> app.js */
+/* ============ app.js - 入口 / 路由 / AI 活跃度 ============ */
+'use strict';
+
+let currentPage = 'feed';
+
+/** 初始化 */
+function init() {
+  // 确保 modal 结构存在
+  const app = document.getElementById('app');
+  if (!document.getElementById('modalBox')) {
+    const over = document.getElementById('modal-overlay');
+    const box = document.createElement('div');
+    box.className = 'modal';
+    box.id = 'modalBox';
+    over.appendChild(box);
+  }
+
+  loadStore();
+  bindNav();
+  bindFAB();
+  switchPage('feed');
+  refreshActivityTimer();
+}
+
+/** 顶栏标题 */
+function refreshTopBar() {
+  const t = { feed: '朋友圈', profile: '我的', settings: '设置' }[currentPage] || '朋友圈';
+  document.getElementById('topTitle').textContent = t;
+}
+
+/** 底栏路由 */
+function bindNav() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.onclick = () => switchPage(btn.dataset.page);
+  });
+}
+
+/** 切换页面 */
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.page === page));
+  const pages = { feed: 'page-feed', profile: 'page-profile', settings: 'page-settings' };
+  ['feed', 'profile', 'settings'].forEach(p => {
+    document.getElementById(pages[p]).style.display = p === page ? 'block' : 'none';
+  });
+  if (page === 'feed') renderFeed();
+  else if (page === 'profile') renderProfile();
+  else if (page === 'settings') { renderSettings(); bindSettingsEvents(); }
+  refreshTopBar();
+}
+
+/** 发布按钮 */
+function bindFAB() {
+  document.getElementById('fabPost').onclick = () => {
+    if (currentPage !== 'feed') switchPage('feed');
+    openComposeModal();
+  };
+}
+
+/* --------- AI 活跃度定时器 --------- */
+let activityTimer = null;
+
+/** 根据 settings 周期重启定时任务 */
+function refreshActivityTimer() {
+  clearInterval(activityTimer);
+  const everyMin = Store.settings.activityEveryMin || 8;
+  activityTimer = setInterval(runScheduledActivites, everyMin * 60 * 1000);
+  // 启动后立即尝试一次（若距上次已过间隔）
+  runScheduledActivites();
+}
+
+/** 定时任务：AI 主动发圈 / 点赞/评论旧动态 */
+async function runScheduledActivites() {
+  if (!Store.settings.aiEnabled) return;
+  if (!apiKey()) return;
+  const now = Date.now();
+  const everyMs = (Store.settings.activityEveryMin || 8) * 60 * 1000;
+  // 节流：距上次运行太近则跳过
+  if (now - Store.settings.lastRun < everyMs) return;
+  Store.settings.lastRun = now;
+  saveStore();
+
+  const active = Store.friends.filter(f => f.active);
+  if (!active.length) return;
+
+  // 主动发圈
+  if (Store.settings.autoPostEnabled && Math.random() < 0.6) {
+    const friend = pick(active);
+    try {
+      const text = await aiPost(friend);
+      if (text) {
+        storePost({ authorId: friend.id, text });
+        friend.lastActivity = now;
+        saveStore();
+        if (currentPage === 'feed') renderFeed();
+      }
+    } catch (e) { logError('aiPost', e); }
+  }
+
+  // 对最近的用户动态点赞/评论
+  const myRecent = Store.posts.filter(p => p.authorId === 'me').slice(0, 5);
+  if (myRecent.length && Store.settings.autoCommentEnabled) {
+    for (const post of myRecent.slice(0, 2)) {
+      const friend = pick(active);
+      if (!hasLiked(post.id, friend.id) && Store.settings.autoLikeEnabled && Math.random() < 0.7) {
+        toggleLike(post.id, friend.id);
+      }
+      if (Store.settings.autoCommentEnabled && Math.random() < 0.5) {
+        try {
+          const text = await aiComment(friend, post);
+          if (text && !commentsOf(post.id).some(c => authorOf(c.authorId).id === friend.id)) {
+            addComment({ postId: post.id, authorId: friend.id, text });
+          }
+        } catch (e) { logError('aiComment', e); }
+      }
+      if (currentPage === 'feed') renderFeed();
+    }
+  }
+}
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* 启动 */
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
