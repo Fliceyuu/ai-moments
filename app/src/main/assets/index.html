@@ -194,6 +194,72 @@ body{
   font-size:14px;z-index:200;max-width:80%;text-align:center;
 }
 
+/* ===== 日记 ===== */
+.diary-tools{padding:10px 14px 0;}
+.diary-date-divider{
+  font-size:12px;color:#999;text-align:center;padding:12px 0 4px;
+}
+.diary-post{background:#fff;margin:8px 12px;border-radius:12px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.06);border-left:3px solid var(--accent);}
+.diary-post .post-head{display:flex;align-items:center;}
+.diary-post .diary-edit-tools{margin-top:8px;color:#999;font-size:12px;text-align:right;}
+
+/* ===== 聊天 ===== */
+.chat-list{max-width:640px;margin:0 auto;}
+.chat-item{
+  display:flex;align-items:center;padding:13px 14px;background:#fff;
+  border-bottom:1px solid var(--line);cursor:pointer;
+}
+.chat-item .chat-info{flex:1;margin-left:12px;min-width:0;}
+.chat-item .chat-name{font-size:15px;font-weight:600;display:flex;align-items:center;}
+.chat-item .chat-last{
+  font-size:12px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;
+}
+.chat-item .chat-time{font-size:11px;color:#bbb;flex-shrink:0;}
+.chat-badge{
+  background:#fa5151;color:#fff;border-radius:10px;min-width:18px;height:18px;
+  font-size:11px;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:6px;
+}
+.chat-room{max-width:640px;margin:0 auto;display:flex;flex-direction:column;height:calc(100% - 48px);}
+.chat-room-head{
+  padding:10px 14px;background:#f7f7f7;font-size:15px;font-weight:600;
+  display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);
+  flex-shrink:0;
+}
+.chat-room-head .back{font-size:16px;color:var(--accent);cursor:pointer;border:none;background:none;}
+.chat-messages{flex:1;overflow-y:auto;padding:12px;background:#ededed;}
+.chat-input-bar{
+  display:flex;gap:8px;padding:8px 10px;background:#f7f7f7;
+  border-top:1px solid #ddd;flex-shrink:0;
+}
+.chat-input-bar input{flex:1;padding:9px 12px;border:1px solid #ddd;border-radius:18px;font-size:15px;}
+.chat-input-bar .send-btn{border:none;background:var(--accent);color:#fff;border-radius:18px;padding:0 18px;font-size:14px;}
+.chat-input-bar .more-btn{border:none;background:#fff;color:var(--accent);border-radius:18px;padding:0 12px;font-size:16px;border:1px solid var(--accent);}
+.msg.system{justify-content:center;}
+.msg.system .bubble{background:transparent;color:#999;font-size:12px;text-align:center;max-width:90%;}
+.msg .who{margin-bottom:2px;}
+
+/* ===== 钱包 ===== */
+.wallet{max-width:640px;margin:0 auto;padding-bottom:20px;}
+.wallet-card{
+  margin:14px;border-radius:14px;padding:22px;color:#fff;
+  background:linear-gradient(135deg,#576b95,#3f4f7a);
+}
+.wallet-card .wallet-label{font-size:13px;opacity:.85;}
+.wallet-card .wallet-balance{font-size:34px;font-weight:700;margin-top:6px;}
+.wallet-card .wallet-sub{font-size:12px;opacity:.75;margin-top:6px;}
+.wallet-actions{display:flex;gap:12px;padding:0 14px;}
+.wallet-actions button{flex:1;padding:12px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;}
+.wallet-actions .recv{background:#fff;color:var(--accent);border:1px solid var(--accent);}
+.wallet-actions .send{background:var(--accent);color:#fff;}
+.transfer-row{display:flex;align-items:flex-start;margin:8px 12px;background:#fff;border-radius:10px;padding:12px;}
+.transfer-row .tr-info{flex:1;}
+.transfer-row .tr-up{font-size:15px;font-weight:600;color:var(--accent);}
+.transfer-row .tr-msg{font-size:13px;color:#666;margin-top:3px;word-break:break-all;}
+.transfer-row .tr-time{font-size:11px;color:#bbb;margin-top:3px;}
+.transfer-row .tr-amt{font-size:16px;font-weight:700;}
+.transfer-row .tr-amt.in{color:var(--danger);}
+.transfer-row .tr-amt.out{color:#30a46c;}
+
 </style></head>
 <body>
 <div id="app" class="app">
@@ -211,14 +277,36 @@ body{
   <!-- 我的个人页 -->
   <main id="page-profile" class="page" style="display:none;"></main>
 
+  <!-- 日记页 -->
+  <main id="page-diary" class="page" style="display:none;">
+    <div class="diary-container">
+      <div class="diary-tools">
+        <button class="btn ghost" style="margin:0;width:auto;padding:8px 14px;" id="diaryAddBtn">✍️ 写日记</button>
+      </div>
+      <div id="diaryList"></div>
+      <div id="diaryEmpty" class="empty-tip" style="display:none;">还没有日记，写下第一篇吧 📔</div>
+    </div>
+  </main>
+
+  <!-- 聊天列表页 -->
+  <main id="page-chat" class="page" style="display:none;"></main>
+
+  <!-- 聊天会话页 -->
+  <main id="page-chat-room" class="page" style="display:none;"></main>
+
+  <!-- 钱包页 -->
+  <main id="page-wallet" class="page" style="display:none;"></main>
+
   <!-- 设置页 -->
   <main id="page-settings" class="page" style="display:none;"></main>
 
   <!-- 底栏 -->
   <nav class="bottom-bar">
     <button class="nav-btn" data-page="feed">朋友圈</button>
+    <button class="nav-btn" data-page="diary">日记</button>
+    <button class="nav-btn" data-page="chat">聊天</button>
+    <button class="nav-btn" data-page="wallet">钱包</button>
     <button class="nav-btn" data-page="profile">我的</button>
-    <button class="nav-btn" data-page="settings">设置</button>
   </nav>
 
   <!-- 浮动发布按钮 -->
@@ -359,6 +447,10 @@ const Store = {
   friends: [],        // AI 好友列表
   posts: [],          // 动态列表（降序）
   comments: [],       // 评论（含楼中楼？用 post 内嵌更简单）
+  diaries: [],        // 日记列表（双方可写）
+  conversations: [],  // 私聊会话（每好友一个）
+  wallet: null,       // 我的钱包（余额）
+  transfers: [],      // 转账记录（收支流水）
   settings: {},       // key / 开关 / 频率
   nextId: 1,
 };
@@ -388,6 +480,8 @@ function defaultFriends() {
       tone: '说话带口头禅"啧"，爱用哈哈，偶尔损我一句但很贴心',
       relation: '认识6年，无话不谈，会互相吐槽',
       chatlog: '',       // 导入的聊天记录
+      note: '室友',      // 备注名（显示用，区别于昵称）
+      balance: 5200,     // 虚拟钱包余额（分）
       autoPost: true,    // 是否主动发圈
       autoLike: true,    // 是否自动点赞
       autoComment: true, // 是否自动评论
@@ -404,6 +498,8 @@ function defaultFriends() {
       tone: '说话温柔，用词亲切，偶尔发小表情',
       relation: '刚认识不久的朋友，正在互相了解',
       chatlog: '',
+      note: '苏苏',      // 备注名
+      balance: 3200,     // 虚拟钱包余额（分）
       autoPost: true,
       autoLike: true,
       autoComment: true,
@@ -425,6 +521,9 @@ function defaultSettings() {
     autoPostEnabled: true,  // AI 主动发圈
     autoLikeEnabled: true,  // AI 点赞
     autoCommentEnabled: true,// AI 评论
+    autoDiaryEnabled: true, // AI 主动写日记
+    autoChatEnabled: true,  // AI 对话/转账回应
+    memeEnabled: true,      // 是否让AI使用热梗
     activityEveryMin: 8,    // 主动活动间隔（分钟）
     lastRun: 0,
   };
@@ -439,8 +538,13 @@ function loadStore() {
       const s = JSON.parse(raw);
       Store.profile = s.profile || defaultProfile();
       Store.friends = s.friends && s.friends.length ? s.friends : defaultFriends();
+      Store.friends.forEach(f => { if (typeof f.balance !== 'number') f.balance = 0; if (!f.note) f.note = ''; });
       Store.posts = s.posts || [];
       Store.comments = s.comments || [];
+      Store.diaries = s.diaries || [];
+      Store.conversations = s.conversations || [];
+      Store.transfers = s.transfers || [];
+      Store.wallet = s.wallet || { balance: 8888, ts: Date.now() }; // 初始余额 88.88
       Store.settings = Object.assign(defaultSettings(), s.settings || {});
       Store.nextId = s.nextId || 1;
       return;
@@ -450,6 +554,10 @@ function loadStore() {
   Store.friends = defaultFriends();
   Store.posts = [];
   Store.comments = [];
+  Store.diaries = [];
+  Store.conversations = [];
+  Store.transfers = [];
+  Store.wallet = { balance: 8888, ts: Date.now() };
   Store.settings = defaultSettings();
   Store.nextId = 1;
 
@@ -652,6 +760,39 @@ function currentDefaultModel() {
 function apiKey() { return (Store.settings.apiKey || '').trim(); }
 
 /**
+ * 内置热梗词库（离线，供 AI 理解并自然使用网络流行语）
+ * 关闭联网搜索时的替代方案；随版本更新扩充。
+ */
+const MEME_DB = [
+  ['你完了', '一种善意的调侃/威胁，表示对方闯祸了或要等着被“收拾”。'],
+  ['典（太典了）', '指行为或话术非常典型、有代表性的反讽，常用于吐槽某种熟悉套路。'],
+  ['绷不住了', '忍不住想笑/崩不住严肃表情，表示很好笑或很荒诞。'],
+  ['破防了', '心理防线被击穿，情绪崩溃或深深感动，常用于吐槽或共情。'],
+  ['家人们', '群体称呼的夸张表达，像和大家熟络地喊话，常用于搞笑地开头。'],
+  ['狠狠住', '狠狠点赞认同的意思，表支持或羡慕。'],
+  ['谁懂啊', '表达“很难有人能体会我这个感受”，常用在吐槽或分享情绪时。'],
+  ['栓Q', '带口音的“thank you”，反讽或搞笑式感谢。'],
+  ['六，6', '谐音“溜”，表示这人很厉害或操作很顶配，一词夸人。'],
+  ['绝绝子', '非常好/非常惊艳的形容词，常用来夸人或吐槽“绝了”。'],
+  ['芭比Q了', '惨了/完蛋了，表示事情糟了。'],
+  ['多多少少有点毛病', '吐槽对方行为不太正常或离谱。'],
+  ['在逃xx', '一种自嘲式称号，如“在逃干饭人”，表示某人正在做某事停不下来。'],
+  ['摆烂', '放弃努力、佛系躺平。'],
+  ['丢人现眼', '网友自嘲或吐槽某个尴尬操作。'],
+  ['我人麻了', '被一系列离谱/无语的事弄到麻木。'],
+  ['尊嘟假嘟', '（真的假的）可爱口音版问句。'],
+  ['贴贴', '指亲近、黏人、想靠近对方，亲密互动用语。'],
+  ['主打一个真实', '强调自己说的很实在、很应景。'],
+];
+
+/** 取随机的几则热梗说明，注入人设，让 AI 可自然引用 */
+function memeContext(max) {
+  if (!Store.settings.memeEnabled) return '';
+  const ks = MEME_DB.slice().sort(() => Math.random() - 0.5).slice(0, max || 4);
+  return ks.map(([k, v]) => `「${k}」：${v}`).join('\n');
+}
+
+/**
  * 构造好友的 system prompt（身份定制核心）
  * @param {object} f 好友（含 identity/tone/relation/chatlog）
  */
@@ -665,6 +806,10 @@ function buildSystemPrompt(f) {
     lines.push(`\n下面是你与用户过往的聊天记录，请从中学习你们的相处方式、他/她怎么称呼你、你的说话习惯、聊过的共同话题，并自然地延续这种感觉和语气：\n${f.chatlog.slice(0, 4000)}`);
   }
   lines.push(`\n你要像真人一样偶尔发布朋友圈动态、给用户的动态点赞评论。评论要口语化、简短、符合人设，别太长（不超过40字）。`);
+  const memes = memeContext(4);
+  if (memes) {
+    lines.push(`\n你是网络冲浪达人，熟悉中文互联网热梗。下面是几条最近的网络热梗及其含义，理解了之后可以在合适的场景自然、不生硬地用到一两句（不要每条都用，别刷屏）：\n${memes}`);
+  }
   return lines.join('\n');
 }
 
@@ -765,6 +910,66 @@ async function aiReply(friend, replyToText, context) {
     `${replyToText}\n` +
     (context ? `（关于这条动态：${context}）\n` : '') +
     `请以${friend.name}的人设回复一句（不超过40字）。只输出 JSON：{"reply":"你的回复"}`;
+  const r = await chatJSON([{ role: 'system', content: system }, { role: 'user', content: userMsg }], friend.model);
+  return (r.reply || '').trim();
+}
+
+/**
+ * 让 AI 好友写一篇日记（双方共用的日记板）
+ * @returns {Promise<string>} 日记文本
+ */
+async function aiDiary(friend) {
+  const system = buildSystemPrompt(friend);
+  const userMsg =
+    `你（${friend.name}）要在你们的共同空间写一篇日记。内容符合人设，可以是心情、今天发生的小事、想说的话，口语化、真实、带点个人色彩，30~90字，不要用列表。\n` +
+    `只输出 JSON：{"text":"日记内容"}`;
+  const r = await chatJSON([{ role: 'system', content: system }, { role: 'user', content: userMsg }], friend.model);
+  return (r.text || '').trim();
+}
+
+/**
+ * 让 AI 好友在私聊里回复用户消息（承接对话上下文）
+ * @param {object} friend 好友
+ * @param {Array} history 历史消息 [{role, content}]
+ */
+async function aiChat(friend, history) {
+  const system = buildSystemPrompt(friend);
+  const messages = [
+    { role: 'system', content: system },
+    ...history.slice(-20),
+  ];
+  const model = friend.model || currentDefaultModel();
+  const res = await fetch(currentEndpoint(), {
+    method: 'POST',
+    headers: Object.assign({
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey(),
+    }, usesOpenRouterHeaders() ? { 'HTTP-Referer': Store.settings.referer, 'X-OpenRouter-Title': Store.settings.title } : {}),
+    body: JSON.stringify({ model, messages, temperature: 1.0, max_tokens: 600 }),
+  });
+  if (!res.ok) {
+    let err = 'HTTP ' + res.status;
+    try { const j = await res.json(); err = (j.error && (j.error.message || j.error)) || err; } catch (e) {}
+    throw new Error('API错误 ' + err);
+  }
+  const data = await res.json();
+  const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!content) throw new Error('空回复');
+  return content.trim();
+}
+
+/**
+ * 让 AI 好友回应一笔收款
+ * @param {object} friend 收款好友
+ * @param {number} amount 金额（分）
+ * @param {string} msg 转账留言
+ * @param {string} who 发起人
+ */
+async function aiReceive(friend, amount, msg, who) {
+  const system = buildSystemPrompt(friend);
+  const userMsg =
+    `${who} 给你转了 ${(amount / 100).toFixed(2)} 元，留言：「${msg || '（无留言）'}」。\n` +
+    `请以${friend.name}的人设回一句感谢或回复（不超过40字）。只输出 JSON：{"reply":"你的回复"}`;
   const r = await chatJSON([{ role: 'system', content: system }, { role: 'user', content: userMsg }], friend.model);
   return (r.reply || '').trim();
 }
@@ -1205,6 +1410,15 @@ function renderProfile() {
         <button class="btn ghost" style="flex:1;margin:0;padding:9px;" onclick="editProfile()">编辑资料</button>
         <button class="btn ghost" style="flex:1;margin:0;padding:9px;" onclick="editBg()">背景图</button>
       </div>
+      <div class="set-group-title">我的功能</div>
+      <div class="set-group">
+        <div class="set-row" onclick="switchPage('settings')">
+          <span class="label">设置</span><span class="value">API Key / 服务商</span><span style="color:#576b95;">›</span>
+        </div>
+        <div class="set-row" onclick="switchPage('wallet')">
+          <span class="label">钱包</span><span class="value">余额 ¥ ${yuan(Store.wallet ? Store.wallet.balance : 0)}</span><span style="color:#576b95;">›</span>
+        </div>
+      </div>
       <div class="set-group-title">我的朋友圈（${myPosts.length}）</div>
       ${postCards}
     </div>`;
@@ -1327,6 +1541,8 @@ function renderSettings() {
         ${switchRow('AI 主动发朋友圈', 'autoPost', s.autoPostEnabled, 'autoPostEnabled')}
         ${switchRow('AI 点赞', 'autoLike', s.autoLikeEnabled, 'autoLikeEnabled')}
         ${switchRow('AI 评论', 'autoComment', s.autoCommentEnabled, 'autoCommentEnabled')}
+        ${switchRow('AI 主动写日记', 'autoDiary', s.autoDiaryEnabled, 'autoDiaryEnabled')}
+        ${switchRow('AI 使用热梗', 'memeSwitch', s.memeEnabled, 'memeEnabled')}
         <div class="set-row">
           <span class="label">活动频率</span>
           <select id="activityFreq" style="font-size:14px;">
@@ -1381,6 +1597,8 @@ function bindSettingsEvents() {
   toggle('autoPost', 'autoPostEnabled');
   toggle('autoLike', 'autoLikeEnabled');
   toggle('autoComment', 'autoCommentEnabled');
+  toggle('autoDiary', 'autoDiaryEnabled');
+  toggle('memeSwitch', 'memeEnabled');
   const freq = document.getElementById('activityFreq');
   if (freq) freq.onchange = () => {
     Store.settings.activityEveryMin = parseInt(freq.value, 10) || 8;
@@ -1473,6 +1691,7 @@ function addFriend() {
     avatar: null, avatarIdx: Math.floor(Math.random() * PALETTE.length),
     model: currentDefaultModel() || 'deepseek/deepseek-chat:free',
     identity: '', tone: '', relation: '', chatlog: '',
+    note: '', balance: 0,
     autoPost: true, autoLike: true, autoComment: true,
     active: true, lastActivity: 0,
   });
@@ -1658,6 +1877,536 @@ async function doReset() {
   }
 }
 
+/* >>> diary.js */
+/* ============ diary.js - 日记模块（双方可写/赞/评/回复） ============ */
+'use strict';
+
+/** 新增一篇日记 */
+function storeDiary(p) {
+  const d = Object.assign({
+    id: 'diary' + (Store.nextId++),
+    authorId: 'me',
+    text: '',
+    ts: Date.now(),
+    likers: [],
+    comments: [],
+  }, p);
+  Store.diaries.unshift(d);
+  if (Store.diaries.length > 400) Store.diaries.length = 400;
+  saveStore();
+  return d;
+}
+
+function diaryLikers(id) { const d = Store.diaries.find(x => x.id === id); return d ? d.likers : []; }
+function diaryHasLiked(id, who) { return diaryLikers(id).indexOf(who) >= 0; }
+
+function toggleDiaryLike(id, who) {
+  const d = Store.diaries.find(x => x.id === id);
+  if (!d) return;
+  if (!d.likers) d.likers = [];
+  const i = d.likers.indexOf(who);
+  if (i >= 0) d.likers.splice(i, 1); else d.likers.push(who);
+  saveStore();
+  return d;
+}
+
+function addDiaryComment(id, c) {
+  const d = Store.diaries.find(x => x.id === id);
+  if (!d) return;
+  if (!d.comments) d.comments = [];
+  const comment = Object.assign({ id: uid('dc'), ts: Date.now() }, c);
+  d.comments.push(comment);
+  saveStore();
+  return comment;
+}
+
+function delDiaryComment(diaryId, cid) {
+  const d = Store.diaries.find(x => x.id === diaryId);
+  if (d && d.comments) d.comments = d.comments.filter(c => c.id !== cid);
+  saveStore();
+}
+
+function renderDiary() {
+  const list = document.getElementById('diaryList');
+  const empty = document.getElementById('diaryEmpty');
+  if (!Store.diaries.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = '';
+  // 按日期分组显示分隔线
+  let lastDay = '';
+  Store.diaries.forEach(d => {
+    const day = new Date(d.ts).toDateString();
+    if (day !== lastDay) {
+      lastDay = day;
+      const div = document.createElement('div');
+      div.className = 'diary-date-divider';
+      div.textContent = new Date(d.ts).getMonth() + 1 + '月' + new Date(d.ts).getDate() + '日';
+      list.appendChild(div);
+    }
+    list.appendChild(buildDiaryEl(d));
+  });
+}
+
+function buildDiaryEl(d) {
+  const author = authorOf(d.authorId);
+  const isMine = d.authorId === 'me';
+  const el = document.createElement('div');
+  el.className = 'diary-post';
+  el.setAttribute('data-diary', d.id);
+
+  const head = document.createElement('div');
+  head.className = 'post-head';
+  head.innerHTML =
+    `<img class="avatar" src="${avatarSrc(author)}">
+     <div style="margin-left:10px;">
+       <div class="post-name">${esc(author.name)}</div>
+       <div class="post-meta">${timeAgo(d.ts)}</div>
+     </div>`;
+  el.appendChild(head);
+
+  // 正文
+  const body = document.createElement('div');
+  body.className = 'post-body';
+  body.innerHTML = `<div class="post-text">${linkifyWithMentions(d.text)}</div>`;
+  el.appendChild(body);
+
+  // 操作条
+  const actions = document.createElement('div');
+  actions.className = 'post-actions';
+  const liked = diaryHasLiked(d.id, 'me');
+  actions.innerHTML =
+    `<span class="post-time">${timeAgo(d.ts)}</span>
+     <div class="action-btns">
+       <button data-dact="comment" data-id="${d.id}">💬 评论</button>
+       <button data-dact="like" data-id="${d.id}" style="${liked ? 'color:#e64340;' : ''}">${liked ? '❤️ 已赞' : '🤍 赞'}</button>
+     </div>`;
+  el.appendChild(actions);
+
+  // 点赞列表
+  if (diaryLikers(d.id).length) {
+    const lb = document.createElement('div');
+    lb.className = 'like-bar';
+    lb.innerHTML = `❤️ <span class="likers">${diaryLikers(d.id).map(w => esc(authorOf(w).name)).join('、')}</span>`;
+    el.appendChild(lb);
+  }
+
+  // 评论区
+  if (d.comments && d.comments.length) {
+    const cb = document.createElement('div');
+    cb.className = 'comment-bar';
+    d.comments.forEach(c => {
+      const ca = authorOf(c.authorId);
+      const row = document.createElement('div');
+      row.className = 'comment';
+      row.setAttribute('data-dcid', c.id);
+      let html;
+      if (c.replyToId && c.replyToId !== c.authorId) {
+        html = `<span class="cname">${esc(ca.name)}</span> 回复 <span class="reply-to">${esc(authorOf(c.replyToId).name)}</span>：<span class="ctext">${esc(c.text)}</span>`;
+      } else {
+        html = `<span class="cname">${esc(ca.name)}</span>：<span class="ctext">${esc(c.text)}</span>`;
+      }
+      row.innerHTML = html + `<div class="creply-target"><a data-drep="${c.id}" style="color:#999;font-size:12px;cursor:pointer;">回复</a>${(c.authorId === 'me' || isMine) ? ` <a data-ddelc="${c.id}" style="color:#bbb;font-size:12px;cursor:pointer;margin-left:8px;">删除</a>` : ''}</div>`;
+      cb.appendChild(row);
+    });
+    cb.addEventListener('click', onDiaryCommentAction);
+    el.appendChild(cb);
+  }
+
+  actions.addEventListener('click', onDiaryAction);
+  el.appendChild(actions);
+  return el;
+}
+
+function onDiaryAction(e) {
+  const btn = e.target.closest('button[data-dact]');
+  if (!btn) return;
+  const id = btn.dataset.id, act = btn.dataset.dact;
+  if (act === 'like') { toggleDiaryLike(id, 'me'); renderDiary(); maybeDiaryReact(id); }
+  else if (act === 'comment') openDiaryCommentModal(id, null, false);
+}
+
+function onDiaryCommentAction(e) {
+  const rep = e.target.closest('a[data-drep]');
+  const del = e.target.closest('a[data-ddelc]');
+  const cid = rep ? rep.dataset.drep : (del ? del.dataset.ddelc : null);
+  if (!cid) return;
+  const diaryId = e.target.closest('[data-diary]').dataset.diary;
+  if (rep) openDiaryCommentModal(diaryId, cid, true);
+  else if (del) (async () => { if (await confirmDialog('删除这条评论？')) { delDiaryComment(diaryId, cid); renderDiary(); } })();
+}
+
+function openDiaryCommentModal(diaryId, replyCid, isReply) {
+  const d = Store.diaries.find(x => x.id === diaryId);
+  if (!d) return;
+  let replyTarget = null;
+  if (isReply && replyCid) { const c = d.comments.find(c => c.id === replyCid); if (c) replyTarget = c; }
+  openModal('写日记评论', (body) => {
+    const ta = document.createElement('textarea');
+    ta.placeholder = replyTarget ? `回复 ${authorOf(replyTarget.authorId).name}…` : '写点什么…';
+    ta.style.minHeight = '60px';
+    body.appendChild(ta);
+    const send = document.createElement('button');
+    send.className = 'btn'; send.textContent = '发送'; body.appendChild(send);
+    send.onclick = async () => {
+      const text = ta.value.trim();
+      if (!text) return toast('先写点内容');
+      const attrs = { authorId: 'me', text };
+      // 被回复者是 AI，或 @了某好友
+      if (replyTarget && replyTarget.authorId !== 'me') attrs.replyToId = replyTarget.authorId;
+      else {
+        const mentions = extractMentions(text);
+        const f = Store.friends.find(f => mentions.includes(f.name));
+        if (f) attrs.replyToId = f.id;
+      }
+      addDiaryComment(diaryId, attrs);
+      closeModal(); renderDiary();
+      if (attrs.replyToId) {
+        const friend = Store.friends.find(f => f.id === attrs.replyToId);
+        if (friend) aiDiaryReplyAndAdd(friend, diaryId, text, replyTarget ? replyTarget.text : null);
+      }
+    };
+    ta.focus();
+  });
+}
+
+async function aiDiaryReplyAndAdd(friend, diaryId, userText, replyTo) {
+  try {
+    const d = Store.diaries.find(x => x.id === diaryId);
+    const ctx = d ? d.text : '';
+    const reply = await aiReply(friend,
+      replyTo ? `用户对你说：「${userText}」（你对用户说过：「${replyTo}」）` : `用户对你说：「${userText}」`, ctx);
+    if (reply) { addDiaryComment(diaryId, { authorId: friend.id, text: reply, replyToId: 'me' }); renderDiary(); }
+  } catch (e) { logError('aiDiaryReply', e); }
+}
+
+function maybeDiaryReact(diaryId) {
+  if (!Store.settings.aiEnabled) return;
+  const d = Store.diaries.find(x => x.id === diaryId);
+  if (!d) return;
+  Store.friends.filter(f => f.active).forEach((friend, i) => {
+    setTimeout(() => {
+      if (Math.random() < 0.5 && Store.settings.autoLikeEnabled) {
+        if (!diaryHasLiked(diaryId, friend.id)) toggleDiaryLike(diaryId, friend.id);
+      }
+      if (Math.random() < 0.4 && Store.settings.autoCommentEnabled) aiDiaryCommentAndAdd(friend, d);
+      renderDiary();
+    }, 800 + i * 1200);
+  });
+}
+
+async function aiDiaryCommentAndAdd(friend, d) {
+  try {
+    const text = await aiComment(friend, { id: d.id, text: d.text, authorId: d.authorId });
+    if (!text) return;
+    addDiaryComment(d.id, { authorId: friend.id, text });
+    renderDiary();
+  } catch (e) { logError('aiDiaryComment', e); }
+}
+
+function openDiaryCompose() {
+  openModal('写日记', (body) => {
+    const ta = document.createElement('textarea');
+    ta.placeholder = '记录今天…（可 @好友，AI 会回应）';
+    ta.style.minHeight = '120px';
+    body.appendChild(ta);
+    const agree = document.createElement('div');
+    agree.style.cssText = 'font-size:12px;color:#999;margin:8px 0 12px;line-height:1.5;';
+    agree.innerHTML = `<label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="diaryAllowAI" checked> 允许 AI 好友也在这篇日记下发声</label>`;
+    body.appendChild(agree);
+    const send = document.createElement('button');
+    send.className = 'btn'; send.textContent = '保存日记'; body.appendChild(send);
+    send.onclick = () => {
+      const text = ta.value.trim();
+      if (!text) return toast('写点内容吧');
+      const d = storeDiary({ authorId: 'me', text });
+      closeModal(); renderDiary();
+      const mentions = extractMentions(text);
+      const friend = Store.friends.find(f => mentions.includes(f.name));
+      if (friend) aiDiaryCommentAndAdd(friend, d);
+      else maybeDiaryReact(d.id);
+    };
+    ta.focus();
+  });
+}
+
+/* >>> chat.js */
+/* ============ chat.js - 私聊 / 备注 / 转账入口 ============ */
+'use strict';
+
+function convOf(fid) {
+  let c = Store.conversations.find(x => x.friendId === fid);
+  if (!c) { c = { friendId: fid, messages: [], unread: 0, ts: 0 }; Store.conversations.push(c); }
+  return c;
+}
+
+/** 会话显示名：备注优先于昵称 */
+function convName(f) {
+  return (f.note && f.note.trim() ? f.note : f.name);
+}
+
+function renderChatList() {
+  const page = document.getElementById('page-chat');
+  // 每个好友一个会话行
+  const rows = Store.friends.map(f => {
+    const c = convOf(f.id);
+    const last = c.messages.length ? c.messages[c.messages.length - 1] : null;
+    return `<div class="chat-item" data-fid="${f.id}">
+      <img class="avatar" style="width:48px;height:48px;border-radius:8px;" src="${avatarSrc(f)}">
+      <div class="chat-info">
+        <div class="chat-name">${esc(convName(f))}${c.unread ? `<span class="chat-badge">${c.unread > 99 ? '99+' : c.unread}</span>` : ''}</div>
+        <div class="chat-last">${last ? esc((last.role === 'me' ? '我：' : '') + last.text) : '开始和 TA 聊聊吧'}</div>
+      </div>
+      <div class="chat-time">${last ? timeAgo(last.ts) : ''}</div>
+    </div>`;
+  }).join('');
+  page.innerHTML = `
+    <div class="chat-list">
+      <div class="set-group-title">私聊（${Store.friends.length}）</div>
+      ${rows || '<div class="empty-tip">还没有好友，去设置里添加</div>'}
+    </div>`;
+  page.querySelectorAll('.chat-item').forEach(el => {
+    el.onclick = () => openChatRoom(el.dataset.fid);
+  });
+}
+
+let activeChatFid = null;
+
+function openChatRoom(fid) {
+  const f = Store.friends.find(x => x.id === fid);
+  if (!f) return;
+  const c = convOf(fid);
+  c.unread = 0; saveStore();
+  activeChatFid = fid;
+  switchInternal('chat-room');
+  renderChatRoom();
+}
+
+function renderChatRoom() {
+  const fid = activeChatFid;
+  const f = Store.friends.find(x => x.id === fid);
+  if (!f) return;
+  const c = convOf(fid);
+  const page = document.getElementById('page-chat-room');
+  page.innerHTML = `
+    <div class="chat-room">
+      <div class="chat-room-head">
+        <button class="back" id="chatBack">‹ 返回</button>
+        <img class="avatar" style="width:32px;height:32px;border-radius:6px;" src="${avatarSrc(f)}">
+        <span style="flex:1;cursor:pointer;" id="chatTitle">${esc(convName(f))}</span>
+      </div>
+      <div class="chat-messages" id="chatMsgs"></div>
+      <div class="chat-input-bar">
+        <input type="text" id="chatInput" placeholder="给${esc(convName(f))}发消息…">
+        <button class="more-btn" id="chatMore" title="转账">＋</button>
+        <button class="send-btn" id="chatSend">发送</button>
+      </div>
+    </div>`;
+  const msgs = document.getElementById('chatMsgs');
+  c.messages.forEach(m => {
+    const row = document.createElement('div');
+    row.className = 'msg ' + (m.role === 'me' ? 'me' : 'friend') + (m.role === 'sys' ? ' system' : '');
+    if (m.role === 'sys') {
+      row.innerHTML = `<div class="bubble">${esc(m.text)}</div>`;
+    } else if (m.role === 'me') {
+      row.innerHTML = `<div class="bubble">${esc(m.text)}</div>`;
+    } else {
+      row.innerHTML = `<div style="max-width:78%;"><div class="who" style="cursor:pointer;">${esc(f.name)}</div><div class="bubble">${esc(m.text)}</div></div>`;
+    }
+    msgs.appendChild(row);
+  });
+  msgs.scrollTop = msgs.scrollHeight;
+
+  document.getElementById('chatBack').onclick = () => switchInternal('chat');
+  document.getElementById('chatTitle').onclick = () => openFriendDetail(fid);
+  document.getElementById('chatMore').onclick = () => openTransferTo(fid);
+  const input = document.getElementById('chatInput');
+  const send = document.getElementById('chatSend');
+  const doSend = async () => {
+    const text = input.value.trim();
+    if (!text) return toast('先输入内容');
+    c.messages.push({ role: 'me', text, ts: Date.now() });
+    c.ts = Date.now(); saveStore();
+    input.value = '';
+    renderChatRoom();
+    await aiReplyChat(f, c, text);
+  };
+  send.onclick = doSend;
+  input.onkeydown = (e) => { if (e.key === 'Enter') doSend(); };
+}
+
+async function aiReplyChat(f, c, userText) {
+  if (!apiKey()) { c.messages.push({ role: 'sys', text: '（未配置 API Key，AI 无法回复。请到 我的→设置 里填写密钥）', ts: Date.now() }); saveStore(); renderChatRoom(); return; }
+  const history = c.messages
+    .filter(m => m.role === 'me' || m.role === 'friend')
+    .slice(-20)
+    .map(m => ({ role: m.role === 'me' ? 'user' : 'assistant', content: m.text }));
+  try {
+    const reply = await aiChat(f, history);
+    if (reply) { c.messages.push({ role: 'friend', text: reply, ts: Date.now() }); c.ts = Date.now(); saveStore(); renderChatRoom(); }
+  } catch (err) {
+    c.messages.push({ role: 'sys', text: '（AI 回复出错：' + err.message + '）', ts: Date.now() }); saveStore(); renderChatRoom();
+  }
+}
+
+/** 好友详情（备注 / 转账等） */
+function openFriendDetail(fid) {
+  const f = Store.friends.find(x => x.id === fid);
+  if (!f) return;
+  openModal('好友详情', (body) => {
+    const note = textField('备注名', f.note, '给 TA 起个备注');
+    body.append(note.wrap);
+    const info = document.createElement('div');
+    info.className = 'field';
+    info.innerHTML = `<label>余额（虚拟元宝）</label><div style="font-size:18px;font-weight:700;color:#576b95;">¥ ${(f.balance / 100).toFixed(2)}</div>`;
+    body.appendChild(info);
+    const save = document.createElement('button');
+    save.className = 'btn'; save.textContent = '保存备注'; body.appendChild(save);
+    save.onclick = () => {
+      f.note = note.body.querySelector('input').value.trim();
+      saveStore(); closeModal(); openChatRoom(fid);
+      toast('已保存');
+    };
+  });
+}
+
+/* >>> wallet.js */
+/* ============ wallet.js - 虚拟钱包 / 转账（模拟，非真实资金） ============ */
+'use strict';
+
+function yuan(v) { return (Math.round((v || 0) / 100 * 100) / 100).toFixed(2); }
+
+/** 我给某好友转账 */
+async function doTransfer(fid, fen, msg) {
+  const f = Store.friends.find(x => x.id === fid);
+  if (!f) return toast('好友不存在');
+  if (!(fen > 0)) return toast('金额不对');
+  if (Store.wallet.balance < fen) return toast('余额不足');
+  // 扣我的，加好友的
+  Store.wallet.balance -= fen;
+  f.balance = (f.balance || 0) + fen;
+  Store.transfers.unshift({ id: uid('tf'), from: 'me', to: fid, amount: fen, msg, ts: Date.now() });
+  saveStore();
+  // 触发好友回应（若有 Key）
+  if (apiKey()) {
+    try {
+      const reply = await aiReceive(f, fen, msg, Store.profile.name);
+      if (reply) {
+        const c = convOf(fid);
+        c.messages.push({ role: 'friend', text: reply, ts: Date.now() });
+        saveStore();
+      }
+    } catch (e) { logError('aiReceive', e); }
+  }
+  toast('已转账'); renderWallet(); if (currentPage === 'chat-room') renderChatRoom();
+}
+
+function renderWallet() {
+  const page = document.getElementById('page-wallet');
+  const fmts = Store.transfers.slice(0, 50);
+  const rows = fmts.map(t => {
+    const isIn = t.to === 'me';
+    const peer = t.from === 'me' ? Store.friends.find(x => x.id === t.to) : null;
+    const peerIn = t.to === 'me' ? Store.friends.find(x => x.id === t.from) : null;
+    const who = isIn ? (peerIn ? convName(peerIn) : '好友') : (peer ? convName(peer) : '好友');
+    return `<div class="transfer-row">
+      <div class="tr-info">
+        <div class="tr-up">${isIn ? who + ' 转给你' : '你转账给 ' + who}</div>
+        <div class="tr-msg">${esc(t.msg || '')}</div>
+        <div class="tr-time">${timeAgo(t.ts)}</div>
+      </div>
+      <div class="tr-amt ${isIn ? 'in' : 'out'}">${isIn ? '+' : '-'}¥ ${yuan(t.amount)}</div>
+    </div>`;
+  }).join('');
+  page.innerHTML = `
+    <div class="wallet">
+      <div class="wallet-card">
+        <div class="wallet-label">我的余额（虚拟元宝）</div>
+        <div class="wallet-balance">¥ ${yuan(Store.wallet.balance)}</div>
+        <div class="wallet-sub">模拟钱包，仅娱乐，非真实资金</div>
+      </div>
+      <div class="wallet-actions">
+        <button class="recv" id="walletRecv">收款</button>
+        <button class="send" id="walletSend">转账</button>
+      </div>
+      <div class="set-group-title">转账记录</div>
+      ${rows || '<div class="empty-tip">还没有转账记录</div>'}
+    </div>`;
+  page.querySelector('#walletSend').onclick = openTransferPicker;
+  page.querySelector('#walletRecv').onclick = openReceiveModal;
+}
+
+function openTransferPicker() {
+  const acts = Store.friends.filter(f => f.active);
+  if (!acts.length) return toast('还没有好友');
+  openModal('选择转账对象', (body) => {
+    acts.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'chat-item';
+      row.innerHTML = `<img class="avatar" style="width:44px;height:44px;border-radius:8px;" src="${avatarSrc(f)}">
+        <div class="chat-info"><div class="chat-name">${esc(convName(f))}</div>
+        <div class="chat-last">余额 ¥ ${yuan(f.balance)}</div></div>`;
+      row.onclick = () => { closeModal(); openTransferTo(f.id); };
+      body.appendChild(row);
+    });
+  });
+}
+
+function openTransferTo(fid) {
+  const f = Store.friends.find(x => x.id === fid);
+  if (!f) return;
+  openModal('转账给 ' + esc(convName(f)), (body) => {
+    const amt = textField('金额（元）', '', '如 5.20');
+    amt.body.querySelector('input').type = 'number';
+    const note = textField('留言（选填）', '', '说句话');
+    const rcvInfo = document.createElement('div');
+    rcvInfo.className = 'field';
+    rcvInfo.innerHTML = `<label>对方余额</label><div style="font-size:15px;color:#666;">¥ ${yuan(f.balance)}</div>`;
+    body.append(rcvInfo, amt.wrap, note.wrap);
+    const send = document.createElement('button');
+    send.className = 'btn'; send.textContent = '确认转账'; body.appendChild(send);
+    send.onclick = async () => {
+      const fen = Math.round(parseFloat(amt.body.querySelector('input').value || '0') * 100);
+      if (!(fen > 0)) return toast('输入有效金额');
+      const msg = note.body.querySelector('input').value.trim();
+      closeModal();
+      await doTransfer(fid, fen, msg);
+    };
+  });
+}
+
+function openReceiveModal() {
+  const acts = Store.friends.filter(f => f.active);
+  if (!acts.length) return toast('还没有好友');
+  openModal('选择收款对象（模拟）', (body) => {
+    const hint = document.createElement('div');
+    hint.className = 'field';
+    hint.innerHTML = `<div style="font-size:12px;color:#999;line-height:1.6;">模拟收款：让某位 AI 好友转给你一笔钱（会回复一句）。纯娱乐，非真实资金。</div>`;
+    body.appendChild(hint);
+    acts.forEach(f => {
+      const row = document.createElement('button');
+      row.className = 'btn ghost'; row.style.textAlign = 'left';
+      row.textContent = '向 ' + convName(f) + ' 收款 ¥10.00';
+      row.style.marginTop = '6px';
+      row.onclick = async () => {
+        closeModal();
+        Store.wallet.balance += 1000;
+        f.balance = Math.max(0, (f.balance || 0) - 1000);
+        Store.transfers.unshift({ id: uid('tf'), from: f.id, to: 'me', amount: 1000, msg: '还你上次借的', ts: Date.now() });
+        saveStore(); renderWallet();
+        if (apiKey()) {
+          try {
+            const reply = await aiReceive(f, 1000, '还你上次借的', f.name);
+            const c = convOf(f.id);
+            if (reply) { c.messages.push({ role: 'friend', text: reply, ts: Date.now() }); saveStore(); }
+          } catch (e) { logError('aiReceiveRecv', e); }
+        }
+        toast('已收款');
+      };
+      body.appendChild(row);
+    });
+  });
+}
+
 /* >>> app.js */
 /* ============ app.js - 入口 / 路由 / AI 活跃度 ============ */
 'use strict';
@@ -1685,8 +2434,9 @@ function init() {
 
 /** 顶栏标题 */
 function refreshTopBar() {
-  const t = { feed: '朋友圈', profile: '我的', settings: '设置' }[currentPage] || '朋友圈';
-  document.getElementById('topTitle').textContent = t;
+  const t = { feed: '朋友圈', profile: '我的', settings: '设置', diary: '日记', chat: '聊天', wallet: '钱包', 'chat-room': '聊天' }[currentPage] || '朋友圈';
+  const el = document.getElementById('topTitle');
+  if (el) el.textContent = t;
 }
 
 /** 底栏路由 */
@@ -1696,19 +2446,40 @@ function bindNav() {
   });
 }
 
-/** 切换页面 */
-function switchPage(page) {
+/** 切换页面的核心逻辑（不依赖底栏高亮，供内部跳转用） */
+function switchInternal(page) {
   currentPage = page;
+  const fab = document.getElementById('fabPost');
+  if (fab) fab.style.display = (page === 'feed') ? '' : 'none';
+  const navPages = ['feed', 'profile', 'settings', 'diary', 'chat', 'wallet'];
   document.querySelectorAll('.nav-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.page === page));
-  const pages = { feed: 'page-feed', profile: 'page-profile', settings: 'page-settings' };
-  ['feed', 'profile', 'settings'].forEach(p => {
-    document.getElementById(pages[p]).style.display = p === page ? 'block' : 'none';
+    b.classList.toggle('active', b.dataset.page === page && navPages.indexOf(page) >= 0));
+  const pages = {
+    feed: 'page-feed', profile: 'page-profile', settings: 'page-settings',
+    diary: 'page-diary', chat: 'page-chat', wallet: 'page-wallet', 'chat-room': 'page-chat-room',
+  };
+  Object.keys(pages).forEach(p => {
+    const el = document.getElementById(pages[p]);
+    if (el) el.style.display = p === page ? 'block' : 'none';
   });
   if (page === 'feed') renderFeed();
   else if (page === 'profile') renderProfile();
   else if (page === 'settings') { renderSettings(); bindSettingsEvents(); }
+  else if (page === 'diary') { renderDiary(); bindDiaryEvents(); }
+  else if (page === 'chat') renderChatList();
+  else if (page === 'wallet') renderWallet();
   refreshTopBar();
+}
+
+/** 底栏入口 */
+function switchPage(page) {
+  switchInternal(page);
+}
+
+/** 绑定日记页按钮 */
+function bindDiaryEvents() {
+  const btn = document.getElementById('diaryAddBtn');
+  if (btn) btn.onclick = openDiaryCompose;
 }
 
 /** 发布按钮 */
@@ -1777,6 +2548,26 @@ async function runScheduledActivites() {
       }
       if (currentPage === 'feed') renderFeed();
     }
+  }
+}
+
+  // AI 主动写日记
+  if (Store.settings.autoDiaryEnabled && Math.random() < 0.35) {
+    const friend = pick(active);
+    try {
+      const text = await aiDiary(friend);
+      if (text) { storeDiary({ authorId: friend.id, text }); if (currentPage === 'diary') renderDiary(); }
+    } catch (e) { logError('aiDiary', e); }
+  }
+
+  // AI 主动来私聊（模拟收到消息 → 未读红点）
+  if (Store.settings.autoChatEnabled && Math.random() < 0.4) {
+    const friend = pick(active);
+    const c = convOf(friend.id);
+    try {
+      const reply = await aiChat(friend, []);
+      if (reply) { c.messages.push({ role: 'friend', text: reply, ts: Date.now() }); c.ts = Date.now(); c.unread = (c.unread || 0) + 1; saveStore(); }
+    } catch (e) { logError('aiChat', e); }
   }
 }
 
