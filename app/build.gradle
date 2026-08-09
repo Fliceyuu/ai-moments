@@ -6,6 +6,17 @@ android {
     namespace 'com.moments.ai'
     compileSdk 34
 
+    signingConfigs {
+        // 固定签名：使用仓库内置 debug.keystore（alias=aikey, 密码=android）
+        // 保证每次 CI 构建签名一致，从而可直接覆盖安装/更新，不再出现"签名不一致"
+        debug {
+            storeFile file('signing/debug.keystore')
+            storePassword 'android'
+            keyAlias 'aikey'
+            keyPassword 'android'
+        }
+    }
+
     defaultConfig {
         applicationId "com.moments.ai"
         minSdk 24
@@ -15,6 +26,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
